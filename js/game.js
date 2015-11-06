@@ -9,8 +9,7 @@ var Textures = {
 	rockFrac: {
 		diffuse: 'images/rockFrac-diffuse.jpg',
 		normal: 'images/rockFrac-normal.jpg'
-	},
-	sky: 'images/sky.jpg'
+	}
 };
 
 var MyCraft = function(){
@@ -62,26 +61,14 @@ var MyCraft = function(){
 		specularMap: MyCraft.makeRepeatTexture(Textures.shinyRock.specular),
 		normalMap: MyCraft.makeRepeatTexture(Textures.shinyRock.normal)
 	})
-	var groundMesh = new THREE.MeshBasicMaterial({color:"red", wireframe: true});
+	//var groundMesh = new THREE.MeshBasicMaterial({color:"red", wireframe: true});
 	//var ground2 = ground.clone();
 	//ground2.rotateX( - Math.PI / 2 );
 
 	this.scene.add(new THREE.Mesh(ground, groundMat));
 	//this.scene.add(new THREE.Mesh(ground2, groundMesh));
 
-	var sky = new THREE.Mesh(
-		new THREE.BoxGeometry(1000, 1000, 1000, 1, 1, 1),
-		new THREE.ShaderMaterial({
-			uniforms: {
-				texture: { type: 't', value: THREE.ImageUtils.loadTexture(Textures.sky) }
-			},
-			vertexShader: $('#sky-vertex').text(),
-			fragmentShader: $('#sky-fragment').text()
-		})
-	);
-	sky.scale.set(-1, 1, 1);
-	//sky.rotateZ( - Math.PI / 2 );
-	this.scene.add(sky);
+	this.setupSky(5000);
 
 	this.timer = new THREE.Clock(true);
 
@@ -114,9 +101,11 @@ MyCraft.prototype.setupPlayer = function(){
 	 * A player is just a 3DObject where the body mesh is all based above the zero. Allowing simple movement and physics.
 	 */
 	this.player = new THREE.Object3D();
-	this.player.add(this.camera);
+	var head = new THREE.Object3D();
+	head.add(this.camera);
+	this.player.add(head);
 	this.player.position.y = 5;
-	this.camera.position.y = 1.7; //Average height of eyes in meters.
+	head.position.y = 1.7; //Average height of eyes in meters.
 	this.scene.add(this.player);
 
 	var controlsEnabled = false;
@@ -129,8 +118,8 @@ MyCraft.prototype.setupPlayer = function(){
 	$(document).on('pointerlockerror', function(){
 		throw new Error("Failed to aquire the pointer. Game will not work.");
 	}).on('pointerlockchange', function(){
-		console.log("Disabled pointer lock.");
 		if (document.pointerLockElement === null){
+			console.log("Disabled pointer lock.");
 			controlsEnabled = false;
 		}
 	});
@@ -200,12 +189,31 @@ MyCraft.prototype.setupPlayer = function(){
 				movement.jump = true;
 				break;
 		}
+
+	});
+
+	var scope = this;
+	var PI_2 = Math.PI / 2;
+
+	$(document).mousemove(function(e){
+
+		if (controlsEnabled === true){
+			var movementX = e.originalEvent.movementX;
+			var movementY = e.originalEvent.movementY;
+
+			scope.player.rotation.y -= movementX * 0.002;
+			head.rotation.x -= movementY * 0.002;
+			head.rotation.x = Math.max( - PI_2, Math.min( PI_2, head.rotation.x ) );
+		}
+
 	});
 
 	this.tasks.push(function(delta){
 		
 		if (controlsEnabled) {
 			
+			
+
 		}
 
 	});
@@ -216,6 +224,47 @@ MyCraft.prototype.update = function(delta){
 	$.each(this.tasks, function(index, task){
 		task.call(scope, delta);
 	});
+};
+MyCraft.prototype.setupSky = function(distance){
+
+	var skyParams = {
+		turbidity: 10,
+		reileigh: 2,
+		mieCoefficient: 0.005,
+		mieDirectionalG: 0.8,
+		luminance: 1,
+		inclination: 0.49, // elevation / inclination
+		azimuth: 0.25, // Facing front,
+	};
+
+	var sunSphere = new THREE.Mesh(
+		new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+		new THREE.MeshBasicMaterial( { color: 0xffffff } )
+	);
+	sunSphere.position.y = - 700000;
+	sunSphere.visible = false;
+	this.scene.add( sunSphere );
+
+	var sky = new THREE.Sky(distance);
+	this.scene.add(sky.mesh);
+
+	var uniforms = sky.uniforms;
+	uniforms.turbidity.value = skyParams.turbidity;
+	uniforms.reileigh.value = skyParams.reileigh;
+	uniforms.luminance.value = skyParams.luminance;
+	uniforms.mieCoefficient.value = skyParams.mieCoefficient;
+	uniforms.mieDirectionalG.value = skyParams.mieDirectionalG;
+
+	var theta = Math.PI * ( skyParams.inclination - 0.5 );
+	var phi = 2 * Math.PI * ( skyParams.azimuth - 0.5 );
+
+	sunSphere.position.x = distance * Math.cos( phi );
+	sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+	sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+
+	sky.uniforms.sunPosition.value.copy( sunSphere.position );
+
+	sunSphere.visible = false;
 };
 MyCraft.makeRepeatTexture = function(url, repeat) {
 	if (repeat === undefined || repeat === null) repeat = 500;
