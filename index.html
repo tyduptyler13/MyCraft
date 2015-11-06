@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MyCraft</title>
+
+<link href="style.css" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.5.0/async.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+
+<script type="application/x-glsl" id="sky-vertex">
+varying vec2 vUV;
+
+void main() {  
+  vUV = uv;
+  vec4 pos = vec4(position, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * pos;
+}
+</script>
+
+<script type="application/x-glsl" id="sky-fragment">  
+uniform sampler2D texture;  
+varying vec2 vUV;
+
+void main() {  
+  vec4 sample = texture2D(texture, vUV);
+  gl_FragColor = vec4(sample.xyz, sample.w);
+}
+</script> 
+
+<script src="game.js"></script>
+
+</head>
+<body>
+
+<div id="game"></div>
+<div id="overlay"></div>
+
+</body>
+</html>
