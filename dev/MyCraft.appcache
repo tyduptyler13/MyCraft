@@ -7,6 +7,9 @@ js/three.min.js
 js/jquery.min.js
 js/async.min.js
 js/Stats.min.js
+js/game.js
+js/Stats.min.js
+js/Voxel.js
 images/moon512.png
 images/shinyRock-diffuse.jpg
 images/shinyRock-normal.jpg
