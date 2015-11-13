@@ -49,11 +49,6 @@ var MyCraft = function(){
 
 	this.setupPlayer();
 
-	var light = new THREE.PointLight();
-	light.position.y = 7;
-	light.position.z = 5;
-	this.scene.add(light);
-
 	var ground = new THREE.PlaneGeometry( 2000, 2000, 100, 100 );
 	ground.rotateX( - Math.PI / 2 );
 
@@ -234,8 +229,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	};
 
 	//Sync time to current time.
-	var date = new Date();
-	skyParams.inclination = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+	skyParams.inclination = Date.now() / (3600000) % 2;
 
 	var sunSphere = new THREE.Mesh(
 		new THREE.SphereBufferGeometry( 20000, 16, 8 ),
@@ -243,10 +237,16 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	);
 	sunSphere.visible = false;
 	sunSphere.fog = false;
-	parent.add( sunSphere );
+
+	var sun = new THREE.DirectionalLight(0xffffff, 1);
+	sun.position = sunSphere.position;
 
 	var sky = new THREE.Sky(distance);
-	parent.add(sky.mesh);
+
+	sky.mesh.add(sunSphere);
+
+	sky.mesh.position = parent.position;
+	this.scene.add(sky.mesh);
 	sky.mesh.fog = false;
 
 	this.scene.fog = new THREE.FogExp2(0x000000, 0.0025);
@@ -271,7 +271,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		starGeo.vertices.push(loc);
 	}
 
-	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0x999999, fog: false});
+	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0x999999, fog: false, transparent: true});
 
 	var stars = new THREE.Points(starGeo, starMat);
 	nightSky.add(stars);
@@ -301,13 +301,9 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	updateUniforms(skyParams);
 
-	API.sky = {
-		getParams : function(){return skyParams;},
-		setParams : function(value){skyParams=value; updateUniforms(skyParams);}
-	};
-
-	this.tasks.push(function(delta){
-		skyParams.inclination += (2 / 3600) * delta;
+	this.tasks.push(function(){
+		skyParams.inclination = Date.now() / (3600000) % 2;
+		starMat.opacity = 1 - Math.abs(1 - skyParams.inclination);
 		updateUniforms(skyParams);
 		nightSky.lookAt(sunSphere.position);
 	});
