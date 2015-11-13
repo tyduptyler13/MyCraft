@@ -1,0 +1,17 @@
+CACHE MANIFEST
+
+#Version 2
+
+CACHE:
+js/three.min.js
+js/jquery.min.js
+js/async.min.js
+js/Stats.min.js
+images/moon512.png
+images/shinyRock-diffuse.jpg
+images/shinyRock-normal.jpg
+images/shinyRock-spec.jpg
+style.css
+
+NETWORK:
+*

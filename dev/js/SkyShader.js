@@ -12,6 +12,8 @@
  * http://blenderartists.org/forum/showthread.php?245954-preethams-sky-impementation-HDR
  *
  * Three.js integration by zz85 http://twitter.com/blurspline
+ *
+ * Modified for use in MyCraft by Tyler Scott.
 */
 
 THREE.ShaderLib[ 'sky' ] = {
@@ -23,7 +25,8 @@ THREE.ShaderLib[ 'sky' ] = {
 		reileigh:	 { type: "f", value: 1 },
 		mieCoefficient:	 { type: "f", value: 0.005 },
 		mieDirectionalG: { type: "f", value: 0.8 },
-		sunPosition: 	 { type: "v3", value: new THREE.Vector3() }
+		sunPosition: 	 { type: "v3", value: new THREE.Vector3() },
+		distance:	{ type: "f", value: 450000}
 
 	},
 
@@ -46,6 +49,7 @@ THREE.ShaderLib[ 'sky' ] = {
 
 		"uniform sampler2D skySampler;",
 		"uniform vec3 sunPosition;",
+		"uniform float distance;",
 		"varying vec3 vWorldPosition;",
 
 		"vec3 cameraPos = vec3(0., 0., 0.);",
@@ -151,7 +155,7 @@ THREE.ShaderLib[ 'sky' ] = {
 
 		"void main() ",
 		"{",
-			"float sunfade = 1.0-clamp(1.0-exp((sunPosition.y/450000.0)),0.0,1.0);",
+			"float sunfade = 1.0-clamp(1.0-exp((sunPosition.y/distance)),0.0,1.0);",
 
 			"// luminance =  1.0 ;// vWorldPosition.y / 450000. + 0.5; //sunPosition.y / 450000. * 1. + 0.5;",
 
