@@ -64,6 +64,13 @@ class Chunk {
 		return this.blocks[x + y*8 + z*8*8];
 	}
 
+	static getPos(index) {
+		var x = index & 0b111;
+		var y = (index>>3) & 0b111;
+		var z = (index>>6) & 0b111;
+		return [x,y,z];
+	}
+
 	set(x, y, z, block) {
 		var index = x + y*8 + z*8*8;
 		if (index < 0 || index > 511){
@@ -74,10 +81,29 @@ class Chunk {
 	}
 
 	fill(block) {
+		var count = 0;
 		for (var x = 0; x < 8; ++x){
 			for (var y = 0; y < 8; ++y){
 				for (var z = 0; z < 8; ++z){
-					this.set(x, y, z, block.clone());
+					var b = block.clone();
+					b.position.set(x, y, z);
+					this.blocks[count] = b;
+					count++;
+				}
+			}
+		}
+	}
+
+	/**
+	 * This function calls a callback at the index of every block in the chunk.
+	 */
+	walk(func){
+		var count = 0;
+		for (var x = 0; x < 8; ++x){
+			for (var y = 0; y < 8; ++y){
+				for (var z = 0; z < 8; ++z){
+					func(this.blocks[count], x, y, z);
+					count++;
 				}
 			}
 		}
