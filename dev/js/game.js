@@ -1,4 +1,4 @@
-
+"use strict";
 var API = {};
 var Textures = {
 	shinyRock: {
@@ -22,7 +22,7 @@ var MyCraft = function(){
 
 	this.tasks = []; //These functions will be run during update.
 
-	var sun = new THREE.AmbientLight(0x404040);
+	var sun = new THREE.AmbientLight(0x202020);
 	this.scene.add(sun);
 
 	var renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
@@ -49,7 +49,7 @@ var MyCraft = function(){
 
 	this.setupPlayer();
 
-	var ground = new THREE.PlaneGeometry( 2000, 2000, 100, 100 );
+	var ground = new THREE.PlaneGeometry( 256, 256, 256, 256 );
 	ground.rotateX( - Math.PI / 2 );
 
 	var groundMat = new THREE.MeshPhongMaterial({
@@ -97,7 +97,6 @@ MyCraft.prototype.setupPlayer = function(){
 	var head = new THREE.Object3D();
 	head.add(this.camera);
 	this.player.add(head);
-	this.player.position.y = 5;
 	head.position.y = 1.7; //Average height of eyes in meters.
 	this.scene.add(this.player);
 
@@ -229,7 +228,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	};
 
 	//Sync time to current time.
-	skyParams.inclination = Date.now() / (3600000) % 2;
+	skyParams.inclination = Date.now() / (1800000) % 2;
 
 	var sunSphere = new THREE.Mesh(
 		new THREE.SphereBufferGeometry( 20000, 16, 8 ),
@@ -239,13 +238,15 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	sunSphere.fog = false;
 
 	var sun = new THREE.DirectionalLight(0xffffff, 1);
-	sun.position = sunSphere.position;
+	sun.position.copy(sunSphere.position);
+	sun.position.normalize();
+	this.scene.add(sun);
 
 	var sky = new THREE.Sky(distance);
 
 	sky.mesh.add(sunSphere);
 
-	sky.mesh.position = parent.position;
+	sky.mesh.position.copy(parent.position);
 	this.scene.add(sky.mesh);
 	sky.mesh.fog = false;
 
@@ -271,13 +272,13 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		starGeo.vertices.push(loc);
 	}
 
-	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0x999999, fog: false, transparent: true});
+	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0xffffff, fog: false, transparent: true});
 
 	var stars = new THREE.Points(starGeo, starMat);
 	nightSky.add(stars);
-	nightSky.location = parent.location;
+	nightSky.position.copy(parent.position);
 	this.scene.add(nightSky);
-	
+
 	var uniforms = sky.uniforms;
 	uniforms.distance.value = distance;
 	var updateUniforms = function(skyParams){
@@ -302,15 +303,24 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	updateUniforms(skyParams);
 
 	this.tasks.push(function(){
-		skyParams.inclination = Date.now() / (3600000) % 2;
-		starMat.opacity = 1 - Math.abs(1 - skyParams.inclination);
+		skyParams.inclination = Date.now() / (1800000) % 2;
+
+		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 3);
+
 		updateUniforms(skyParams);
+
+		sun.position.copy(sunSphere.position);
+		sun.position.normalize();
+
+		nightSky.position.copy(parent.position);
 		nightSky.lookAt(sunSphere.position);
+
+		sky.mesh.position.copy(parent.position);
 	});
 
 };
 MyCraft.makeRepeatTexture = function(url, repeat) {
-	if (repeat === undefined || repeat === null) repeat = 500;
+	if (repeat === undefined || repeat === null) repeat = 256;
 	var tex = THREE.ImageUtils.loadTexture(url);
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 	tex.repeat.set(repeat, repeat);
@@ -319,6 +329,6 @@ MyCraft.makeRepeatTexture = function(url, repeat) {
 
 $(function(){
 
-	game = new MyCraft();
+	window.game = new MyCraft();
 
 });
