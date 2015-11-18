@@ -1,0 +1,6 @@
+{
+	"0": {"name": "void", "solid": false, "hazard": 1},
+	"1": {"name": "air", "solid": false},
+	"2": {"name": "rock", "diffuseMap": "images/shinyRock-diffuse.jpg", "specularMap": "images/shinyRock-spec.jpg", "normalMap": "images/shinyRock-normal.jpg"},
+	"3": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"}
+}
