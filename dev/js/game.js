@@ -1,22 +1,10 @@
 "use strict";
-var API = {};
-var Textures = {
-	shinyRock: {
-		diffuse: 'images/shinyRock-diffuse.jpg',
-		specular: 'images/shinyRock-spec.jpg',
-		normal: 'images/shinyRock-normal.jpg'
-	},
-	rockFrac: {
-		diffuse: 'images/rockFrac-diffuse.jpg',
-		normal: 'images/rockFrac-normal.jpg'
-	},
-	moon: 'images/moon512.png'
-};
-
 var MyCraft = function(){
 	var win = $(window);
 	var width = win.width();
 	var height = win.height();
+
+	this.chunks = [];
 
 	this.scene = new THREE.Scene();
 
@@ -47,24 +35,13 @@ var MyCraft = function(){
 
 	$('#game').append(this.renderer.domElement);
 
-	this.setupPlayer();
+	this.player = new Player(this);
+	this.scene.add(this.player.mesh);
 
-	var ground = new THREE.PlaneGeometry( 256, 256, 256, 256 );
-	ground.rotateX( - Math.PI / 2 );
-
-	var groundMat = new THREE.MeshPhongMaterial({
-		map: MyCraft.makeRepeatTexture(Textures.shinyRock.diffuse),
-		specularMap: MyCraft.makeRepeatTexture(Textures.shinyRock.specular),
-		normalMap: MyCraft.makeRepeatTexture(Textures.shinyRock.normal)
-	})
-	var groundMesh = new THREE.MeshBasicMaterial({color:"red", wireframe: true});
-
-	this.scene.add(new THREE.Mesh(ground, groundMat));
-
+	this.setupChunks();
 	this.setupSky(5000, this.player);
 
 	this.timer = new THREE.Clock(true);
-
 	this.stats = new Stats();
 
 	$(this.stats.domElement).css({
@@ -93,120 +70,8 @@ MyCraft.prototype.setupPlayer = function(){
 	/**
 	 * A player is just a 3DObject where the body mesh is all based above the zero. Allowing simple movement and physics.
 	 */
-	this.player = new THREE.Object3D();
-	var head = new THREE.Object3D();
-	head.add(this.camera);
-	this.player.add(head);
-	head.position.y = 1.7; //Average height of eyes in meters.
-	this.scene.add(this.player);
-
-	var controlsEnabled = false;
-
-	$('#game > canvas').click(function(){
-		controlsEnabled = true;
-		this.requestPointerLock();
-	});
-
-	$(document).on('pointerlockerror', function(){
-		throw new Error("Failed to aquire the pointer. Game will not work.");
-	}).on('pointerlockchange', function(){
-		if (document.pointerLockElement === null){
-			console.log("Disabled pointer lock.");
-			controlsEnabled = false;
-		}
-	});
-
-	var movement = {
-		up: false,
-		left: false,
-		right: false,
-		back: false,
-		jump: false
-	};
-
-	$(document).keydown(function(e){
-		switch(e.which){
-			case 38: // up
-			case 87: // w
-				movement.up = false;
-				break;
-
-			case 37: // left
-			case 65: // a
-				movement.left = false;
-				break;
-
-			case 40: // down
-			case 83: // s
-				movement.back = false;
-				break;
-
-			case 39: // right
-			case 68: // d
-				movement.right = false;
-				break;
-
-			case 32: // space
-				movement.jump = false;
-				break;
-		}
-	});
-
-	$(document).keyup(function(e){
-		switch(e.which) {
-			case 27: controlsEnabled = false;
-				break;
-
-			case 38: // up
-			case 87: // w
-				movement.up = true;
-				break;
-
-			case 37: // left
-			case 65: // a
-				movement.left = true;
-				break;
-
-			case 40: // down
-			case 83: // s
-				movement.back = true;
-				break;
-
-			case 39: // right
-			case 68: // d
-				movement.right = true;
-				break;
-
-			case 32: // space
-				movement.jump = true;
-				break;
-		}
-
-	});
-
-	var scope = this;
-	var PI_2 = Math.PI / 2;
-
-	$(document).mousemove(function(e){
-
-		if (controlsEnabled === true){
-			var movementX = e.originalEvent.movementX;
-			var movementY = e.originalEvent.movementY;
-
-			scope.player.rotation.y -= movementX * 0.002;
-			head.rotation.x -= movementY * 0.002;
-			head.rotation.x = Math.max( - PI_2, Math.min( PI_2, head.rotation.x ) );
-		}
-
-	});
-
-	this.tasks.push(function(delta){
-
-		if (controlsEnabled) {
-
-		}
-
-	});
+	var player = new Player(this);
+	this.scene.add(player.mesh);
 
 };
 MyCraft.prototype.update = function(delta){
@@ -243,6 +108,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	this.scene.add(sun);
 
 	var sky = new THREE.Sky(distance);
+	sky.mesh.frustumCulled = false;
 
 	sky.mesh.add(sunSphere);
 
@@ -275,6 +141,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0xffffff, fog: false, transparent: true});
 
 	var stars = new THREE.Points(starGeo, starMat);
+	stars.frustumCulled = false;
 	nightSky.add(stars);
 	nightSky.position.copy(parent.position);
 	this.scene.add(nightSky);
@@ -319,13 +186,40 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	});
 
 };
-MyCraft.makeRepeatTexture = function(url, repeat) {
-	if (repeat === undefined || repeat === null) repeat = 256;
-	var tex = THREE.ImageUtils.loadTexture(url);
-	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-	tex.repeat.set(repeat, repeat);
-	return tex;
-}
+MyCraft.prototype.setupChunks = function(){
+
+	var scope = this;
+
+	var createChunk = function(rock, x, y, z){
+		var chunk = new Chunk(rock);
+		chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
+		scope.scene.add(chunk.space);
+		scope.chunks.push(chunk);
+		async.nextTick(function(){
+			chunk.optimize();
+		});
+	};
+
+	var init = function(){
+		API.getMaterial(3, function(material){
+			var rock = new Block(3, material);
+			for (var x=0; x<4; ++x){
+				for (var y=0; y<4; ++y){
+					for (var z=0; z<4; ++z){
+						async.nextTick(createChunk(rock, x, y, z));
+					}
+				}
+			}
+		});
+	};
+
+	if (BlockDataReady){
+		init();
+	} else {
+		$(document).on('BlockDataReady', init);
+	}
+
+};
 
 $(function(){
 

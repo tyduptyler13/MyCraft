@@ -1,6 +1,6 @@
 {
-	"_comment": "Blocks can have the following attributes (defaults in paranetheses): name, solid(true), movement(1) {multiply movement speed by this value}, hazard(0) {hp to remove per second}",
 	"0": {"name": "void", "solid": false, "hazard": 1},
 	"1": {"name": "air", "solid": false},
-	"2": {"name": "rock"}
+	"2": {"name": "rock", "diffuseMap": "images/shinyRock-diffuse.jpg", "specularMap": "images/shinyRock-spec.jpg", "normalMap": "images/shinyRock-normal.jpg"},
+	"3": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"}
 }
