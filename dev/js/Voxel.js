@@ -15,14 +15,15 @@ $.ajax({
 	}
 });
 
-API.getMaterial = (function(){
-	var matCache = [];
-	var texCache = [];
+(function(){
+	var matCache = {};
+	var texCache = {};
 	var loader = new THREE.TextureLoader();
-	return function(type, callback){
+	API.getMaterial =  function(type, callback){
 
 		if (matCache[type]){
 			callback(matCache[type]);
+			return;
 		}
 
 		async.each(['diffuseMap', 'normalMap', 'specularMap'], function(item, callback){
@@ -57,12 +58,34 @@ API.getMaterial = (function(){
 		})
 
 	};
+
+	API.getTexture = function(type, name){
+		return texCache[type][name];
+	}
+
+	API.getTextures = function(){
+		return texCache;
+	}
+
+	API.setAnisotropy = function(anisotropy) {
+		for (var index in texCache){
+			for (var key in texCache[index]){
+				var value = texCache[index][key];
+				value.anisotropy(anisotropy);
+			}
+		}
+	}
+
 })();
 
 class BaseBlock {
 
 	constructor(type){
 		this.type = type || 0;
+	}
+
+	copy(block){
+		this.type = block.type;
 	}
 
 	get solid(){
@@ -94,8 +117,9 @@ class Block extends BaseBlock {
 	}
 
 	copy(block){
+		super.copy(block);
 		this.material = block.material;
-		this.geometry = BlockGeometry.clone();
+		this.geometry.copy(BlockGeometry);
 		this.mesh = new THREE.Mesh(this.geometry, this.material);
 	}
 
@@ -109,6 +133,61 @@ class Block extends BaseBlock {
 
 }
 
+class BlockCache {
+	constructor(){
+		this.cache = {};
+	}
+
+	add(block){
+		var type = block.type;
+		if (!this.cache[type]){
+			this.cache[type] = new Array();
+		}
+		this.cache[type].push(block);
+	}
+
+	remove(block){
+		var type = block.type;
+		if (!this.cache[type]) return;
+		for (var i = 0; i < this.cache[type].length; ++i){
+			if (this.cache[type][i] === block){
+				this.cache[type].splice(i, 1);
+			}
+		}
+	}
+
+	optimize(key, callback){
+		var meld = new THREE.Geometry();
+		var cache = this.cache;
+		var mat = API.getMaterial(key, function(mat){
+			cache[key].forEach(function(value){
+				value.mesh.updateMatrix();
+				meld.merge(value.geometry, value.mesh.matrix);
+			});
+
+			meld.mergeVertices();
+
+			//TODO Remove internal faces.
+
+			callback(new THREE.Mesh(meld, mat));
+		});
+		
+	}
+
+	getOptimized(){
+		var o = [];
+
+		for (var key in this.cache){
+			this.optimize(key, function(block){
+				o.push(block);
+			});
+		}
+
+		return o;
+	}
+
+}
+
 class Chunk {
 
 	constructor(block){
@@ -116,6 +195,7 @@ class Chunk {
 			block = new BaseBlock(1);
 		}
 		this.blocks = new Array(8 * 8 * 8);
+		this.realBlocks = new BlockCache();
 		this.space = new THREE.Object3D();
 		this.superBlock = null; //This is reserved for the optimized merged block.
 		this.fill(block);
@@ -134,11 +214,12 @@ class Chunk {
 
 	setIndex(index, block) {
 		if (this.blocks[index] instanceof Block){
-			this.space.remove(block.mesh);
+			this.realBlocks.remove(block);
 		}
 		this.blocks[index] = block;
 		if (block instanceof Block){
-			this.space.add(block.mesh);
+			this.realBlocks.add(block);
+			this.dirty = true;
 		}
 	}
 
@@ -186,23 +267,11 @@ class Chunk {
 	}
 
 	optimize() {
-		var meld = new THREE.Geometry();
-		var mats = [];
-		var mat = this.space.children[0].material.clone();
- 		mat.visible = true;
-// 		for (var i = 0; i < 6; ++i){
-// 			mats.push(mats[0]); //Fudging the materialOffset.
-// 		}
-		if (this.superBlock){
-			this.space.remove(this.superBlock);
+		if (this.dirty){
+			this.space.remove.apply(this.space, this.space.children);
+			this.space.add.apply(this.space, this.realBlocks.getOptimized());
+			this.dirty = false;
 		}
-		this.space.children.forEach(function(value, index){
-			value.material.visible = false;
-			meld.merge(value.geometry, value.matrix);
-		});
-		meld.mergeVertices();
-		this.superBlock = new THREE.Mesh(meld, mat);// new THREE.MeshFaceMaterial(mats));
-		this.space.add(this.superBlock);
 	}
 
 	get position() {
