@@ -119,13 +119,6 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	this.scene.fog = new THREE.FogExp2(0x000000, 0.0025);
 
 	var nightSky = new THREE.Object3D();
-	//Moon is disabled because the texture looks goofy and doesn't update location.
-	//var moonTexture = THREE.ImageUtils.loadTexture(Textures.moon);
-	//var moonGeo = new THREE.Geometry();
-	//var moonLoc = new THREE.Vector3();
-	//moonGeo.vertices.push(moonLoc);
-	//var moon = new THREE.Points(moonGeo, new THREE.PointsMaterial({map: moonTexture, fog: false, size: 200, sizeAttenuation: false, blending: THREE.AdditiveBlending, depthTest: false, transparent: true}))
-	//parent.add(moon);
 
 	var starGeo = new THREE.Geometry();
 
@@ -173,6 +166,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		skyParams.inclination = Date.now() / (1800000) % 2;
 
 		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 3);
+		sun.intensity = sunSphere.position.y > 0 ? 1 : 0;
 
 		updateUniforms(skyParams);
 
