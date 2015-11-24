@@ -184,23 +184,19 @@ MyCraft.prototype.setupChunks = function(){
 
 	var scope = this;
 
-	var createChunk = function(rock, x, y, z){
-		var chunk = new Chunk(rock);
+	var createChunk = function(type, x, y, z){
+		var chunk = new Chunk(type);
 		chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
 		scope.scene.add(chunk.space);
 		scope.chunks.push(chunk);
-		async.nextTick(function(){
-			chunk.optimize();
-		});
 	};
 
 	var init = function(){
 		API.getMaterial(3, function(material){
-			var rock = new Block(3, material);
 			for (var x=0; x<4; ++x){
 				for (var y=0; y<4; ++y){
 					for (var z=0; z<4; ++z){
-						async.nextTick(createChunk(rock, x, y, z));
+						createChunk(2, x, y, z);
 					}
 				}
 			}
