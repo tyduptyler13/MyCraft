@@ -189,6 +189,7 @@ MyCraft.prototype.setupChunks = function(){
 		chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
 		scope.scene.add(chunk.space);
 		scope.chunks.push(chunk);
+		chunk.update();
 	};
 
 	var init = function(){

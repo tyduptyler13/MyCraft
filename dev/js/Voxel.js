@@ -79,6 +79,7 @@ $.ajax({
 
 })();
 
+var chunkPool = new ThreadPool('js/ChunkOptimizer.js');
 
 class Chunk {
 
@@ -121,9 +122,9 @@ class Chunk {
 	 */
 	walk(func){
 		var count = 0;
-		for (var x = 0; x < 8; ++x){
+		for (var z = 0; z < 8; ++z){
 			for (var y = 0; y < 8; ++y){
-				for (var z = 0; z < 8; ++z){
+				for (var x = 0; x < 8; ++x){
 					func(this.blocks[count], x, y, z);
 					count++;
 				}
@@ -131,8 +132,10 @@ class Chunk {
 		}
 	}
 
-	optimize() {
-		console.log("No longer applicable. [Chunk.optimize]");
+	update() {
+		chunkPool.run(this.blocks.slice(0), function(e){
+			console.log("updated.");
+		});
 	}
 
 	get position() {
