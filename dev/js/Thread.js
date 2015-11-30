@@ -60,8 +60,7 @@ class ThreadPool {
 		if (this.readyThreads.length > 0){
 			var index = this.readyThreads.pop();
 			$(this.threads[index]).one('message', function(e){
-				console.log(e);
-				callback(e);
+				callback(e.originalEvent);
 			});
 			this.threads[index].postMessage(work.buffer, [work.buffer]);
 		} else {

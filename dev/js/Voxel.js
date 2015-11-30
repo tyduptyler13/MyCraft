@@ -77,6 +77,10 @@ $.ajax({
 		}
 	}
 
+	API.getBlockMaterial = function(){
+		//TODO create/get MultiMaterial.
+	}
+
 })();
 
 var chunkPool = new ThreadPool('js/ChunkOptimizer.js');
@@ -86,7 +90,18 @@ class Chunk {
 	constructor(type){
 		this.blocks = new Int8Array(8 * 8 * 8);
 		this.space = new THREE.Object3D();
-		this._data = null; //This is reserved for the optimized merged block
+		var geometry = new THREE.BufferGeometry();
+		this._attributes = {
+			position: new THREE.BufferAttribute(new Float32Array(), 3),
+			indices: new THREE.BufferAttribute(new Uint16Array(), 1),
+			uvs: new THREE.BufferAttribute(new Float32Array(), 2),
+			normals: new THREE.BufferAttribute(new Float32Array(), 3)
+		}; //Reserved for master block.
+		geometry.addAttribute('position', this._attributes.position);
+		geometry.addAttribute('uvs', this._attributes.uvs);
+		geometry.addAttribute('normals', this._attributes.normals);
+		geometry.setIndex(this._attributes.indices);
+		this.space.add(new THREE.Mesh(geometry));
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
 	}
@@ -133,8 +148,31 @@ class Chunk {
 	}
 
 	update() {
+
+		var scope = this;
+
 		chunkPool.run(this.blocks.slice(0), function(e){
-			console.log("updated.");
+
+			var data = e.data;
+
+			scope._attributes['position'].array = new Float32Array(data.position);
+			scope._attributes['position'].needsUpdate = true;
+			scope._attributes['normals'].array = new Float32Array(data.normals);
+			scope._attributes['normals'].needsUpdate = true;
+			scope._attributes['uvs'].array = new Float32Array(data.uvs);
+			scope._attributes['uvs'].needsUpdate = true;
+			scope._attributes['indices'].array = new Uint16Array(data.indices);
+			scope._attributes['indices'].needsUpdate = true;
+
+			var materials = new Uint8Array(data.materialIndex);
+
+			scope._data.clearGroups();
+
+			for (var i = 0; i < materials.length; ++i){
+				scope._data.addGroup(24 * i, 24, materials[i]);
+			}
+
+			console.log("Chunk optimized:", e.data);
 		});
 	}
 
@@ -144,6 +182,10 @@ class Chunk {
 
 	set position(pos) {
 		this.space.position.copy(pos);
+	}
+
+	static get material() {
+		API.getBlockMaterial();
 	}
 
 }

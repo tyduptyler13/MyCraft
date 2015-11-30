@@ -142,10 +142,11 @@ var marchX = function(typeArray) {
 
 var generate = function(ranges) {
 
-	var verticies = [];
+	var vertices = [];
 	var materialIndex = [];
-	var indicies = [];
+	var indices = [];
 	var normals = [];
+	var uvs = [];
 
 	ranges.forEach(function(range){
 		var px = range.xLen + range.x,
@@ -157,45 +158,79 @@ var generate = function(ranges) {
 
 		var offset = vertices.length;
 
-		vertices.push(nx, ny, nz,
-					  px, ny, nz,
-					  nx, ny, pz,
-					  px, ny, pz,
-					  nx, py, nz,
-					  px, py, nz,
-					  nx, py, pz,
-					  px, py, pz);
+		vertices.push(
+			px, py, pz,
+			px, py, nz,
+			px, ny, pz,
+			px, ny, nz,
+			nx, py, nz,
+			nx, py, pz,
+			nx, ny, nz,
+			nx, ny, pz);
 
-		indicies.concat([
-			 0, 2, 3,
-			 3, 1, 0,
-			 1, 5, 4,
-			 4, 0, 1,
-			 3, 7, 5,
-			 5, 1, 3,
-			 2, 6, 7,
-			 7, 3, 2,
-			 0, 4, 6,
-			 6, 2, 0,
-			 5, 7, 6,
-			 6, 4, 5
-		 ].map(function(val, index, array){ //Offset all the values.
+		indices = indices.concat([
+			0, 2, 1,
+			2, 3, 1,
+			4, 6, 5,
+			6, 7, 5,
+			4, 5, 1,
+			5, 0, 1,
+			7, 6, 2,
+			6, 3, 2,
+			5, 7, 0,
+			7, 2, 0,
+			1, 3, 4,
+			3, 6, 4
+		].map(function(val, index, array){ //Offset all the values.
 			array[index] = val + offset;
-		 }));
+		}));
 
-		 materialIndex.concat(new Array(12).fill(range.type));
+		normals = normals.concat([
+			[1, 0, 0],
+			[-1, 0, 0],
+			[0, 1, 0],
+			[0, -1, 0],
+			[0, 0, 1],
+			[0, 0, -1]
+		].reduce(function (previous, next){
+			for (var i = 0; i < 6; ++i){ //Expand 6 times for each corner of 2 triangles.
+				previous = previous.concat(next);
+			}
+			return previous;
+		}, []));
+
+		uvs.push(
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1);
+
+		materialIndex.push(range.type);
 
 	});
 
-	//TODO
+	var data = {
+		position: Float32Array.from(vertices).buffer,
+		materialIndex: Uint8Array.from(materialIndex).buffer,
+		indices: Uint16Array.from(indices).buffer,
+		normals: Float32Array.from(normals).buffer,
+		uvs: Float32Array.from(uvs).buffer
+	}
 
-	return ranges;
+	self.postMessage(data, [data.position, data.materialIndex, data.indices, data.normals, data.uvs]);
+
 }
 
 self.addEventListener('message',function(e){
 
-	var data = generate(marchY(marchZ(marchX(new Int8Array(e.data)))));
-
-	self.postMessage(data);
+	generate(marchY(marchZ(marchX(new Int8Array(e.data)))));
 
 });
