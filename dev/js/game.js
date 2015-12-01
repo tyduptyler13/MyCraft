@@ -184,30 +184,16 @@ MyCraft.prototype.setupChunks = function(){
 
 	var scope = this;
 
-	var createChunk = function(type, x, y, z){
-		var chunk = new Chunk(type);
-		chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
-		scope.scene.add(chunk.space);
-		scope.chunks.push(chunk);
-		chunk.update();
-	};
-
-	var init = function(){
-		API.getMaterial(3, function(material){
-			for (var x=0; x<4; ++x){
-				for (var y=0; y<4; ++y){
-					for (var z=0; z<4; ++z){
-						createChunk(2, x, y, z);
-					}
-				}
+	for (var x=0; x<4; ++x){
+		for (var y=0; y<4; ++y){
+			for (var z=0; z<4; ++z){
+				var chunk = new Chunk(0);
+				chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
+				scope.scene.add(chunk.space);
+				scope.chunks.push(chunk);
+				chunk.update();
 			}
-		});
-	};
-
-	if (BlockDataReady){
-		init();
-	} else {
-		$(document).on('BlockDataReady', init);
+		}
 	}
 
 };

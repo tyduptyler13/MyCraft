@@ -1,24 +1,13 @@
 "use strict";
 
-var BlockData;
-var BlockDataReady = false;
-$.ajax({
-	url: 'blocks.json',
-	success: function(data){
-		console.log(data);
-		BlockData = data;
-		BlockDataReady = true;
-		$(document).trigger('BlockDataReady');
-	},
-	error: function(jqXHR, textStatus, errorThrown){
-		console.log(jqXHR, textStatus, errorThrown);
-	}
-});
-
 (function(){
 	var matCache = {};
 	var texCache = {};
 	var loader = new THREE.TextureLoader();
+	var BlockData = {};
+	var BlockMaterial = new THREE.MultiMaterial();
+	BlockMaterial.visible = false;
+
 	API.getMaterial =  function(type, callback){
 
 		if (matCache[type]){
@@ -59,6 +48,33 @@ $.ajax({
 
 	};
 
+	$.ajax({
+		url: 'blocks.json',
+		success: function(data){
+			BlockData = data;
+			var materials = [];
+			async.forEachOf(data, function(data, key, callback){
+				if (key >= 0){
+					API.getMaterial(key, function(material){
+						callback();
+						materials[key] = material;
+					})
+				} else {
+					callback();
+				}
+			}, function(err){
+				if (err){
+					console.error("Unable to prefetch the required textures.");
+				}
+				BlockMaterial.materials = materials;
+				BlockMaterial.visible = true;
+			});
+		},
+		error: function(jqXHR, textStatus, errorThrown){
+			console.log(jqXHR, textStatus, errorThrown);
+		}
+	});
+
 	API.getTexture = function(type, name){
 		return texCache[type][name];
 	}
@@ -78,7 +94,7 @@ $.ajax({
 	}
 
 	API.getBlockMaterial = function(){
-		//TODO create/get MultiMaterial.
+		return BlockMaterial;
 	}
 
 })();
@@ -90,18 +106,18 @@ class Chunk {
 	constructor(type){
 		this.blocks = new Int8Array(8 * 8 * 8);
 		this.space = new THREE.Object3D();
-		var geometry = new THREE.BufferGeometry();
-		this._attributes = {
+		var geometry = this.geometry = new THREE.BufferGeometry();
+		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
 			indices: new THREE.BufferAttribute(new Uint16Array(), 1),
 			uvs: new THREE.BufferAttribute(new Float32Array(), 2),
 			normals: new THREE.BufferAttribute(new Float32Array(), 3)
 		}; //Reserved for master block.
-		geometry.addAttribute('position', this._attributes.position);
-		geometry.addAttribute('uvs', this._attributes.uvs);
-		geometry.addAttribute('normals', this._attributes.normals);
-		geometry.setIndex(this._attributes.indices);
-		this.space.add(new THREE.Mesh(geometry));
+		geometry.addAttribute('position', this.attributes.position);
+		geometry.addAttribute('uvs', this.attributes.uvs);
+		geometry.addAttribute('normals', this.attributes.normals);
+		geometry.setIndex(this.attributes.indices);
+		this.space.add(new THREE.Mesh(geometry, API.getBlockMaterial()));
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
 	}
@@ -155,21 +171,21 @@ class Chunk {
 
 			var data = e.data;
 
-			scope._attributes['position'].array = new Float32Array(data.position);
-			scope._attributes['position'].needsUpdate = true;
-			scope._attributes['normals'].array = new Float32Array(data.normals);
-			scope._attributes['normals'].needsUpdate = true;
-			scope._attributes['uvs'].array = new Float32Array(data.uvs);
-			scope._attributes['uvs'].needsUpdate = true;
-			scope._attributes['indices'].array = new Uint16Array(data.indices);
-			scope._attributes['indices'].needsUpdate = true;
+			scope.attributes['position'].array = new Float32Array(data.position);
+			scope.attributes['position'].needsUpdate = true;
+			scope.attributes['normals'].array = new Float32Array(data.normals);
+			scope.attributes['normals'].needsUpdate = true;
+			scope.attributes['uvs'].array = new Float32Array(data.uvs);
+			scope.attributes['uvs'].needsUpdate = true;
+			scope.attributes['indices'].array = new Uint16Array(data.indices);
+			scope.attributes['indices'].needsUpdate = true;
 
 			var materials = new Uint8Array(data.materialIndex);
 
-			scope._data.clearGroups();
+			scope.geometry.clearGroups();
 
 			for (var i = 0; i < materials.length; ++i){
-				scope._data.addGroup(24 * i, 24, materials[i]);
+				scope.geometry.addGroup(24 * i, 24, materials[i]);
 			}
 
 			console.log("Chunk optimized:", e.data);

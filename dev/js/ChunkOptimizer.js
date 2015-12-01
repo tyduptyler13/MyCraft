@@ -181,8 +181,8 @@ var generate = function(ranges) {
 			7, 2, 0,
 			1, 3, 4,
 			3, 6, 4
-		].map(function(val, index, array){ //Offset all the values.
-			array[index] = val + offset;
+		].map(function(val){ //Offset all the values.
+			return val + offset;
 		}));
 
 		normals = normals.concat([
