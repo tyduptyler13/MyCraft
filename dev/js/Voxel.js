@@ -1,24 +1,15 @@
 "use strict";
 
-var BlockData;
-var BlockDataReady = false;
-$.ajax({
-	url: 'blocks.json',
-	success: function(data){
-		console.log(data);
-		BlockData = data;
-		BlockDataReady = true;
-		$(document).trigger('BlockDataReady');
-	},
-	error: function(jqXHR, textStatus, errorThrown){
-		console.log(jqXHR, textStatus, errorThrown);
-	}
-});
-
 (function(){
 	var matCache = {};
 	var texCache = {};
 	var loader = new THREE.TextureLoader();
+	var BlockData = {};
+	var BlockMaterial = new THREE.MultiMaterial();
+	BlockMaterial.visible = false;
+	var ready = false;
+	var onReady = [];
+
 	API.getMaterial =  function(type, callback){
 
 		if (matCache[type]){
@@ -28,7 +19,7 @@ $.ajax({
 
 		async.each(['diffuseMap', 'normalMap', 'specularMap'], function(item, callback){
 			if (!BlockData[type][item]){
-				console.log("Skipping empty texture.");
+				//console.log("Skipping empty texture.");
 				callback();
 				return;
 			}
@@ -37,6 +28,7 @@ $.ajax({
 					texCache[type] = {};
 				}
 				texCache[type][item] = texture;
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 				callback();
 			}, function(){}, function(){
 				callback(new Error("Texture failed to load."));
@@ -49,7 +41,8 @@ $.ajax({
 			var material = new THREE.MeshPhongMaterial({
 				map: texCache[type]['diffuseMap'],
 				specularMap: texCache[type]['specularMap'],
-				normalMap: texCache[type]['normalMap']
+				normalMap: texCache[type]['normalMap'],
+				name: BlockData[type].name
 			});
 
 			matCache[type] = material;
@@ -58,6 +51,41 @@ $.ajax({
 		})
 
 	};
+
+	$.ajax({
+		url: 'blocks.json',
+		success: function(data){
+			BlockData = data;
+			var materials = [];
+			async.forEachOf(data, function(data, key, callback){
+				if (key >= 0){
+					API.getMaterial(key, function(material){
+						callback();
+						materials[key] = material;
+					})
+				} else {
+					callback();
+				}
+			}, function(err){
+				if (err){
+					console.error("Unable to prefetch the required textures.");
+				}
+				BlockMaterial.materials = materials;
+				BlockMaterial.visible = true;
+				ready = true;
+				onReady.forEach(function(callback){
+					try{
+						callback();
+					} catch (e){
+						console.warn("Failed to call callback!", e);
+					}
+				});
+			});
+		},
+		error: function(jqXHR, textStatus, errorThrown){
+			console.log(jqXHR, textStatus, errorThrown);
+		}
+	});
 
 	API.getTexture = function(type, name){
 		return texCache[type][name];
@@ -71,134 +99,49 @@ $.ajax({
 		for (var index in texCache){
 			for (var key in texCache[index]){
 				var value = texCache[index][key];
-				value.anisotropy(anisotropy);
+				value.anisotropy = anisotropy;
+				value.needsUpdate = true;
 			}
+		}
+	}
+
+	API.getBlockMaterial = function(){
+		return BlockMaterial;
+	}
+
+	API.onBlocksReady = function(callback){
+		if (ready){
+			callback();
+		} else {
+			onReady.push(callback);
 		}
 	}
 
 })();
 
-class BaseBlock {
-
-	constructor(type){
-		this.type = type || 0;
-	}
-
-	copy(block){
-		this.type = block.type;
-	}
-
-	get solid(){
-		return BlockData[this.type]["solid"] || true;
-	}
-
-	get movement(){
-		return BlockData[this.type]["movement"] || 1;
-	}
-
-	get name(){
-		return BlockData[this.type]["name"];
-	}
-
-	get hazard(){
-		return BlockData[this.type]["hazard"] || 0;
-	}
-
-}
-
-const BlockGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
-
-class Block extends BaseBlock {
-	constructor(type, material){
-		super(type);
-		this.material = material;
-		this.geometry = BlockGeometry.clone();
-		this.mesh = new THREE.Mesh(this.geometry, this.material);
-	}
-
-	copy(block){
-		super.copy(block);
-		this.material = block.material;
-		this.geometry.copy(BlockGeometry);
-		this.mesh = new THREE.Mesh(this.geometry, this.material);
-	}
-
-	clone() {
-		return new Block(this.type, this.material);
-	}
-
-	get position(){
-		return this.mesh.position;
-	}
-
-}
-
-class BlockCache {
-	constructor(){
-		this.cache = {};
-	}
-
-	add(block){
-		var type = block.type;
-		if (!this.cache[type]){
-			this.cache[type] = new Array();
-		}
-		this.cache[type].push(block);
-	}
-
-	remove(block){
-		var type = block.type;
-		if (!this.cache[type]) return;
-		for (var i = 0; i < this.cache[type].length; ++i){
-			if (this.cache[type][i] === block){
-				this.cache[type].splice(i, 1);
-			}
-		}
-	}
-
-	optimize(key, callback){
-		var meld = new THREE.Geometry();
-		var cache = this.cache;
-		var mat = API.getMaterial(key, function(mat){
-			cache[key].forEach(function(value){
-				value.mesh.updateMatrix();
-				meld.merge(value.geometry, value.mesh.matrix);
-			});
-
-			meld.mergeVertices();
-
-			//TODO Remove internal faces.
-
-			callback(new THREE.Mesh(meld, mat));
-		});
-		
-	}
-
-	getOptimized(){
-		var o = [];
-
-		for (var key in this.cache){
-			this.optimize(key, function(block){
-				o.push(block);
-			});
-		}
-
-		return o;
-	}
-
-}
+var chunkPool = new ThreadPool('js/ChunkOptimizer.js');
 
 class Chunk {
 
-	constructor(block){
-		if (!block){
-			block = new BaseBlock(1);
-		}
-		this.blocks = new Array(8 * 8 * 8);
-		this.realBlocks = new BlockCache();
+	constructor(type){
+		this.blocks = new Int8Array(8 * 8 * 8);
 		this.space = new THREE.Object3D();
-		this.superBlock = null; //This is reserved for the optimized merged block.
-		this.fill(block);
+		this.added = false;
+		var geometry = this.geometry = new THREE.BufferGeometry();
+		this.attributes = {
+			position: new THREE.BufferAttribute(new Float32Array(), 3),
+			index: new THREE.BufferAttribute(new Uint16Array(), 1),
+			uv: new THREE.BufferAttribute(new Float32Array(), 2),
+			normal: new THREE.BufferAttribute(new Float32Array(), 3),
+//			colors: new THREE.BufferAttribute(new Uint8Array(), 3)
+		}; //Reserved for master block.
+		geometry.addAttribute('position', this.attributes.position);
+		geometry.addAttribute('uv', this.attributes.uv);
+		geometry.addAttribute('normal', this.attributes.normal);
+		geometry.setIndex(this.attributes.index);
+		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
+		this._metaBlocks = []; //Reserved for future special blocks.
+		if (type !== 0) this.fill(type);
 	}
 
 	at(x, y, z) {
@@ -212,41 +155,17 @@ class Chunk {
 		return [x,y,z];
 	}
 
-	setIndex(index, block) {
-		if (this.blocks[index] instanceof Block){
-			this.realBlocks.remove(block);
-		}
-		this.blocks[index] = block;
-		if (block instanceof Block){
-			this.realBlocks.add(block);
-			this.dirty = true;
-		}
-	}
-
-	set(x, y, z, block) {
+	set(x, y, z, type) {
 		var index = x + y*8 + z*8*8;
 		if (index < 0 || index > 511){
 			throw new Error("Out of bounds.");
 		}
-		block.position.set(x, y, z);
-		this.setIndex(index, block);
+		this.blocks[index] = type;
 	}
 
-	fill(block) {
+	fill(type) {
 		var count = 0;
-		for (var x = 0; x < 8; ++x){
-			for (var y = 0; y < 8; ++y){
-				for (var z = 0; z < 8; ++z){
-					var b;
-					if (block instanceof Block){
-						b = block.clone();
-						b.position.set(x, y, z);
-					}
-					this.setIndex(count, b);
-					count++;
-				}
-			}
-		}
+		this.blocks.fill(type); //Native fill operation.
 	}
 
 	/**
@@ -256,9 +175,9 @@ class Chunk {
 	 */
 	walk(func){
 		var count = 0;
-		for (var x = 0; x < 8; ++x){
+		for (var z = 0; z < 8; ++z){
 			for (var y = 0; y < 8; ++y){
-				for (var z = 0; z < 8; ++z){
+				for (var x = 0; x < 8; ++x){
 					func(this.blocks[count], x, y, z);
 					count++;
 				}
@@ -266,12 +185,43 @@ class Chunk {
 		}
 	}
 
-	optimize() {
-		if (this.dirty){
-			this.space.remove.apply(this.space, this.space.children);
-			this.space.add.apply(this.space, this.realBlocks.getOptimized());
-			this.dirty = false;
-		}
+	update() {
+
+		var scope = this;
+
+		chunkPool.run(this.blocks.slice(0), function(e){
+
+			var data = e.data;
+
+			scope.attributes['position'].array = new Float32Array(data.position);
+			scope.attributes['position'].needsUpdate = true;
+			scope.attributes['normal'].array = new Float32Array(data.normals);
+			scope.attributes['normal'].needsUpdate = true;
+			scope.attributes['uv'].array = new Float32Array(data.uvs);
+			scope.attributes['uv'].needsUpdate = true;
+			scope.attributes['index'].array = new Uint16Array(data.indices);
+			scope.attributes['index'].needsUpdate = true;
+//			scope.attributes['colors'].array = new Uint8Array(scope.attributes['position'].array.length).fill(255);
+//			scope.attributes['colors'].needsUpdate = true;
+
+			var materials = new Uint8Array(data.materialIndex);
+
+			scope.geometry.clearGroups();
+			//scope.geometry.computeVertexNormals();
+
+			for (var i = 0; i < materials.length; ++i){
+				scope.geometry.addGroup(36 * i, 36, materials[i]);
+			}
+
+			if (!scope.added){
+				API.onBlocksReady(function(){
+					scope.space.add(scope.mesh);
+				});
+				scope.added = true;
+			}
+
+			//console.log("Chunk optimized:", scope.attributes);
+		});
 	}
 
 	get position() {
@@ -280,6 +230,10 @@ class Chunk {
 
 	set position(pos) {
 		this.space.position.copy(pos);
+	}
+
+	static get material() {
+		API.getBlockMaterial();
 	}
 
 }

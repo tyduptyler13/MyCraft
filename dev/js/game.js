@@ -10,8 +10,8 @@ var MyCraft = function(){
 
 	this.tasks = []; //These functions will be run during update.
 
-	var sun = new THREE.AmbientLight(0x202020);
-	this.scene.add(sun);
+	this.ambientLight = new THREE.AmbientLight(0x404040);
+	this.scene.add(this.ambientLight);
 
 	var renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
 	this.renderer.setSize(width, height);
@@ -162,11 +162,21 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	updateUniforms(skyParams);
 
+	var night = new THREE.Color(0x001848).multiplyScalar(.5);
+	var day = new THREE.Color(0xFFFFFF).multiplyScalar(.2);
+
 	this.tasks.push(function(){
 		skyParams.inclination = Date.now() / (1800000) % 2;
+		//skyParams.inclination = 0;
 
-		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 3);
-		sun.intensity = sunSphere.position.y > 0 ? 1 : 0;
+		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 2);
+		sun.intensity = THREE.Math.clamp(sunSphere.position.y + 1, 0, 1);
+
+		if (sunSphere.position.y > 0){ //Day.
+			this.ambientLight.color.copy(night.clone().lerp(day, sunSphere.position.y / 10000 + .5));
+		} else { //Night.
+			this.ambientLight.color.copy(day.clone().lerp(night, -sunSphere.position.y / 10000 + .5));
+		}
 
 		updateUniforms(skyParams);
 
@@ -184,33 +194,16 @@ MyCraft.prototype.setupChunks = function(){
 
 	var scope = this;
 
-	var createChunk = function(rock, x, y, z){
-		var chunk = new Chunk(rock);
-		chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
-		scope.scene.add(chunk.space);
-		scope.chunks.push(chunk);
-		async.nextTick(function(){
-			chunk.optimize();
-		});
-	};
-
-	var init = function(){
-		API.getMaterial(3, function(material){
-			var rock = new Block(3, material);
-			for (var x=0; x<4; ++x){
-				for (var y=0; y<4; ++y){
-					for (var z=0; z<4; ++z){
-						async.nextTick(createChunk(rock, x, y, z));
-					}
-				}
+	for (var x=0; x<4; ++x){
+		for (var y=0; y<4; ++y){
+			for (var z=0; z<4; ++z){
+				var chunk = new Chunk(1);
+				chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
+				scope.scene.add(chunk.space);
+				scope.chunks.push(chunk);
+				chunk.update();
 			}
-		});
-	};
-
-	if (BlockDataReady){
-		init();
-	} else {
-		$(document).on('BlockDataReady', init);
+		}
 	}
 
 };
