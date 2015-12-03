@@ -21,3 +21,26 @@ html, body {
     overflow: hidden;
     pointer-events: none;
 }
+
+#settings {
+    margin: auto;
+    width: 400px;
+    background-color: black;
+    background-image: url(http://www.pixempire.com/images/preview/dark-background-with-pattern.jpg);
+    background-position: center center;
+    border: 1px white solid;
+    border-radius: 3px;
+    text-align: center;
+    text-shadow: black 1px 1px 2px;
+    color: white;
+    pointer-events: all;
+    display: none;
+}
+
+#settingsButton {
+    position: fixed;
+    top: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+}
