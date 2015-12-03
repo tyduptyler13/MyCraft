@@ -199,19 +199,17 @@ var generate = function(ranges) {
 			return previous;
 		}, []));
 
-		uvs.push(
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1);
+		var invX = 1 * range.xLen;
+		var invY = 1 * range.yLen;
+		var invZ = 1 * range.zLen;
+
+		var tmp = [];
+		tmp.push(
+			0, invX, 0, 0, invZ, invZ,
+			0, 0, invY, 0, invZ, invZ
+		);
+
+		uvs = uvs.concat(tmp, tmp, tmp, tmp, tmp, tmp);
 
 		materialIndex.push(range.type);
 

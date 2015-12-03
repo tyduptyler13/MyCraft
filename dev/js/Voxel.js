@@ -7,6 +7,8 @@
 	var BlockData = {};
 	var BlockMaterial = new THREE.MultiMaterial();
 	BlockMaterial.visible = false;
+	var ready = false;
+	var onReady = [];
 
 	API.getMaterial =  function(type, callback){
 
@@ -26,6 +28,7 @@
 					texCache[type] = {};
 				}
 				texCache[type][item] = texture;
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 				callback();
 			}, function(){}, function(){
 				callback(new Error("Texture failed to load."));
@@ -38,7 +41,8 @@
 			var material = new THREE.MeshPhongMaterial({
 				map: texCache[type]['diffuseMap'],
 				specularMap: texCache[type]['specularMap'],
-				normalMap: texCache[type]['normalMap']
+				normalMap: texCache[type]['normalMap'],
+				name: BlockData[type].name
 			});
 
 			matCache[type] = material;
@@ -68,6 +72,14 @@
 				}
 				BlockMaterial.materials = materials;
 				BlockMaterial.visible = true;
+				ready = true;
+				onReady.forEach(function(callback){
+					try{
+						callback();
+					} catch (e){
+						console.warn("Failed to call callback!", e);
+					}
+				});
 			});
 		},
 		error: function(jqXHR, textStatus, errorThrown){
@@ -97,6 +109,14 @@
 		return BlockMaterial;
 	}
 
+	API.onBlocksReady = function(callback){
+		if (ready){
+			callback();
+		} else {
+			onReady.push(callback);
+		}
+	}
+
 })();
 
 var chunkPool = new ThreadPool('js/ChunkOptimizer.js');
@@ -106,18 +126,20 @@ class Chunk {
 	constructor(type){
 		this.blocks = new Int8Array(8 * 8 * 8);
 		this.space = new THREE.Object3D();
+		this.added = false;
 		var geometry = this.geometry = new THREE.BufferGeometry();
 		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
-			indices: new THREE.BufferAttribute(new Uint16Array(), 1),
-			uvs: new THREE.BufferAttribute(new Float32Array(), 2),
-			normals: new THREE.BufferAttribute(new Float32Array(), 3)
+			index: new THREE.BufferAttribute(new Uint16Array(), 1),
+			uv: new THREE.BufferAttribute(new Float32Array(), 2),
+			normal: new THREE.BufferAttribute(new Float32Array(), 3),
+//			colors: new THREE.BufferAttribute(new Uint8Array(), 3)
 		}; //Reserved for master block.
 		geometry.addAttribute('position', this.attributes.position);
-		geometry.addAttribute('uvs', this.attributes.uvs);
-		geometry.addAttribute('normals', this.attributes.normals);
-		geometry.setIndex(this.attributes.indices);
-		this.space.add(new THREE.Mesh(geometry, API.getBlockMaterial()));
+		geometry.addAttribute('uv', this.attributes.uv);
+		geometry.addAttribute('normal', this.attributes.normal);
+		geometry.setIndex(this.attributes.index);
+		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
 	}
@@ -173,22 +195,32 @@ class Chunk {
 
 			scope.attributes['position'].array = new Float32Array(data.position);
 			scope.attributes['position'].needsUpdate = true;
-			scope.attributes['normals'].array = new Float32Array(data.normals);
-			scope.attributes['normals'].needsUpdate = true;
-			scope.attributes['uvs'].array = new Float32Array(data.uvs);
-			scope.attributes['uvs'].needsUpdate = true;
-			scope.attributes['indices'].array = new Uint16Array(data.indices);
-			scope.attributes['indices'].needsUpdate = true;
+			scope.attributes['normal'].array = new Float32Array(data.normals);
+			scope.attributes['normal'].needsUpdate = true;
+			scope.attributes['uv'].array = new Float32Array(data.uvs);
+			scope.attributes['uv'].needsUpdate = true;
+			scope.attributes['index'].array = new Uint16Array(data.indices);
+			scope.attributes['index'].needsUpdate = true;
+//			scope.attributes['colors'].array = new Uint8Array(scope.attributes['position'].array.length).fill(255);
+//			scope.attributes['colors'].needsUpdate = true;
 
 			var materials = new Uint8Array(data.materialIndex);
 
 			scope.geometry.clearGroups();
+			//scope.geometry.computeVertexNormals();
 
 			for (var i = 0; i < materials.length; ++i){
-				scope.geometry.addGroup(24 * i, 24, materials[i]);
+				scope.geometry.addGroup(36 * i, 36, materials[i]);
 			}
 
-			console.log("Chunk optimized:", e.data);
+			if (!scope.added){
+				API.onBlocksReady(function(){
+					scope.space.add(scope.mesh);
+				});
+				scope.added = true;
+			}
+
+			//console.log("Chunk optimized:", scope.attributes);
 		});
 	}
 
