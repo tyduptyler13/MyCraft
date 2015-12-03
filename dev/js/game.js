@@ -52,6 +52,8 @@ var MyCraft = function(){
 
 	$('body').append(this.stats.domElement);
 
+	this.setupUI();
+
 	this.render();
 
 }
@@ -162,8 +164,8 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	updateUniforms(skyParams);
 
-	var night = new THREE.Color(0x001848).multiplyScalar(.5);
-	var day = new THREE.Color(0xFFFFFF).multiplyScalar(.2);
+	var night = new THREE.Color(0x001848);
+	var day = new THREE.Color(0xFFFFFF).multiplyScalar(.7);
 
 	this.tasks.push(function(){
 		skyParams.inclination = Date.now() / (1800000) % 2;
@@ -194,11 +196,11 @@ MyCraft.prototype.setupChunks = function(){
 
 	var scope = this;
 
-	for (var x=0; x<4; ++x){
+	for (var x=0; x<10; ++x){
 		for (var y=0; y<4; ++y){
-			for (var z=0; z<4; ++z){
+			for (var z=0; z<10; ++z){
 				var chunk = new Chunk(1);
-				chunk.position.set((x - 2) * 8, (y - 4) * 8, (z - 2) * 8);
+				chunk.position.set((x - 5) * 8, (y - 4) * 8, (z - 5) * 8);
 				scope.scene.add(chunk.space);
 				scope.chunks.push(chunk);
 				chunk.update();
@@ -207,6 +209,25 @@ MyCraft.prototype.setupChunks = function(){
 	}
 
 };
+MyCraft.prototype.setupUI = function(){
+	$('#settingsButton').click(function(){
+		$('#settings').slideToggle();
+	});
+
+	var max = this.renderer.getMaxAnisotropy();
+	var anisotropy = $('#anisotropy');
+
+	for (var i = 2; i <= max; i *= 2){
+		anisotropy.append('<option value="' + i + '">' + i + '</option>');
+	}
+
+	anisotropy.prop('disabled', false);
+
+	anisotropy.change(function(){
+		var val = anisotropy.find(':selected').val();
+		API.setAnisotropy(Number(val));
+	});
+}
 
 $(function(){
 

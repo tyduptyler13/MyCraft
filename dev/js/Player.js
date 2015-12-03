@@ -20,8 +20,8 @@ class Player {
 			throw new Error("Failed to aquire the pointer. Game will not work.");
 		}).on('pointerlockchange', function(){
 			if (document.pointerLockElement === null){
-				console.log("Disabled pointer lock.");
 				controlsEnabled = false;
+				console.log("Disabled pointer lock.");
 			}
 		});
 

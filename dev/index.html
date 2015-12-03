@@ -4,6 +4,8 @@
 
 <title>MyCraft</title>
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+
 <link href="style.css" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.js"></script>
@@ -26,7 +28,17 @@ var API = {};
 <body>
 
 <div id="game"></div>
-<div id="overlay"></div>
+<div id="overlay">
+	<div id="settings">
+		<h3>Game Settings</h3>
+		<h4>Video Settings</h4>
+		<label for="anisotropy">Anisotropy</label>
+		<select disabled id="anisotropy">
+			<option value="1" selected="selected">1</value>
+		</select>
+	</div>
+	<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
+</div>
 
 </body>
 </html>
