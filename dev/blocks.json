@@ -2,5 +2,6 @@
 	"-1": {"name": "void", "solid": false, "hazard": 1},
 	"-2": {"name": "air", "solid": false},
 	"0": {"name": "rock", "diffuseMap": "images/shinyRock-diffuse.jpg", "specularMap": "images/shinyRock-spec.jpg", "normalMap": "images/shinyRock-normal.jpg"},
-	"1": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"}
+	"1": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"},
+	"2": {"name": "stonebrick", "diffuseMap": "images/stoneBrick-diffuse.jpg", "normalMap": "images/stoneBrick-normal.jpg"}
 }
