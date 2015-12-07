@@ -36,9 +36,19 @@ var API = {};
 		<select disabled id="anisotropy">
 			<option value="1" selected="selected">1</value>
 		</select>
+		<h4>Audio Settings</h4>
+		<label>Current Song:</label>
+		<div id="audioplayer" onload="updatemusic();">
+		Disfigure - Blank
+		<audio id="musicplayer" controls autoplay>
+		<source src="http://youtubeinmp3.com/fetch/?video=https://www.youtube.com/watch?v=p7ZsBPK656s" type="audio/mpeg">
+		</audio>
+</div>
 	</div>
 	<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
 </div>
+
+<script src="js/music.js"></script>
 
 </body>
 </html>
