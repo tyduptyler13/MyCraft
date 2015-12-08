@@ -44,3 +44,39 @@ html, body {
     pointer-events: all;
     cursor: pointer;
 }
+
+#musicUI:hover {
+	color: white;
+    position: fixed;
+	background-color: black;
+    bottom: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+	width: auto;
+	height: auto;
+	opacity: 0.8:
+}
+#musicUI {
+	color: white;
+	background-color: black;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+	width: 20px;
+	height: 20px;
+	opacity: 1.0;
+}
+
+#musicTitle {
+	color: white;
+	background-color: black;
+    position: fixed;
+    bottom: 0;
+    right: 1;
+	width: auto;
+	height: auto;
+	opacity: 1.0;
+}
