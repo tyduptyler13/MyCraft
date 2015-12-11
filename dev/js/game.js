@@ -91,7 +91,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		mieDirectionalG: 0.8,
 		luminance: 1,
 		inclination: 0.49, // elevation / inclination
-		azimuth: 0.25, // Facing front,
+		azimuth: 0.3, // Facing front,
 	};
 
 	//Sync time to current time.
@@ -199,7 +199,7 @@ MyCraft.prototype.setupChunks = function(){
 	for (var x=0; x<10; ++x){
 		for (var y=0; y<4; ++y){
 			for (var z=0; z<10; ++z){
-				var chunk = new Chunk(1);
+				var chunk = new Chunk((x + y + z) % 6);
 				chunk.position.set((x - 5) * 8, (y - 4) * 8, (z - 5) * 8);
 				scope.scene.add(chunk.space);
 				scope.chunks.push(chunk);

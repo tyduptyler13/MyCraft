@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MyCraft</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+
+<link href="style.css" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.5.0/async.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+
+<script>
+//Public global variables.
+var API = {};
+</script>
+
+<script src="js/MyCraft.js"></script>
+
+<script src="https://apis.google.com/js/client.js?onload=onGoogleLoad"></script>
+
+</head>
+<body>
+
+<div id="game"></div>
+<div id="overlay">
+	<div id="settings">
+		<h3>Game Settings</h3>
+		<h4>Video Settings</h4>
+		<label for="anisotropy">Anisotropy</label>
+		<select disabled id="anisotropy">
+			<option value="1" selected="selected">1</value>
+		</select>
+		<h4>Audio Settings</h4>
+		<label>Current Song:</label>
+		<div id="audioplayer">
+		</div>
+	</div>
+	<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
+</div>
+
+</body>
+</html>
