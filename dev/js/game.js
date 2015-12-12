@@ -78,8 +78,9 @@ MyCraft.prototype.setupPlayer = function(){
 };
 MyCraft.prototype.update = function(delta){
 	var scope = this;
-	$.each(this.tasks, function(index, task){
+	async.each(this.tasks, function(task, callback){
 		task.call(scope, delta);
+		callback();
 	});
 };
 MyCraft.prototype.setupSky = function(distance, parent){
@@ -227,7 +228,7 @@ MyCraft.prototype.setupUI = function(){
 		var val = anisotropy.find(':selected').val();
 		API.setAnisotropy(Number(val));
 	});
-}
+};
 
 $(function(){
 
