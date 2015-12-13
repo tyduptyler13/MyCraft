@@ -31,7 +31,8 @@ class Player {
 			left: false,
 			right: false,
 			back: false,
-			jump: false
+			jump: false,
+			crouch: false
 		};
 
 		$(document).keydown(function(e){
@@ -58,6 +59,9 @@ class Player {
 
 				case 32: // space
 					movement.jump = true;
+					break;
+				case 16:
+					movement.crouch = true;
 					break;
 			}
 		});
@@ -89,6 +93,9 @@ class Player {
 
 				case 32: // space
 					movement.jump = false;
+					break;
+				case 16:
+					movement.crouch = false;
 					break;
 			}
 
@@ -124,13 +131,13 @@ class Player {
 		//Fly movement.
 		const fb = movement.up ? -1 : movement.back ? 1 : 0;
 		const lr = movement.left ? -1 : movement.right ? 1 : 0;
-		const up = movement.jump ? 1 : 0;
+		const up = movement.jump ? 1 : movement.crouch ? -1 : 0;
 
 		if (fb || lr || up){
 			const dir = new THREE.Vector3(lr,0,fb); //Point relative to where we wanna go. -Z is forward.
 			dir.normalize();
 			dir.applyEuler(this.head.getWorldRotation());
-			dir.y = up ? Math.max(dir.y, up) : dir.y;
+			dir.y = up ? up : dir.y;
 			dir.multiplyScalar(3 * delta); //Multiply the direction by distance per second and delta.
 			this.position.add(dir); //Move there.
 		}

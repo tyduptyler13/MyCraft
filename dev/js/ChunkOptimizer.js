@@ -43,8 +43,6 @@ const marchY = function(planeRanges){
 
 	}
 
-	console.log(ranges);
-
 	return ranges;
 
 };
@@ -103,8 +101,6 @@ const marchZ = function(linearRanges){
 
 	}
 
-	console.log(ranges);
-
 	return ranges;
 
 };
@@ -142,8 +138,6 @@ const marchX = function(typeArray) {
 
 	}
 
-	console.log(ranges);
-
 	return ranges;
 
 };
@@ -157,8 +151,6 @@ const generate = function(ranges) {
 	var uvs = [];
 
 	ranges.forEach(function(range){
-
-		console.log(range.type, range);
 
 		const px = range.xLen + range.x,
 			py = range.yLen + range.y,
@@ -204,7 +196,8 @@ const generate = function(ranges) {
 			[0, 0, 1],
 			[0, 0, -1]
 		].reduce(function (previous, next){
-			for (var i = 0; i < 6; ++i){ //Expand 6 times for each corner of 2 triangles.
+			//This expansion doesn't seem to matter. I believe the normals are incorrect in a fairly major way.
+			for (var i = 0; i < 2; ++i){ //Expand 6 times for each corner of 2 triangles.
 				previous = previous.concat(next);
 			}
 			return previous;
@@ -215,18 +208,18 @@ const generate = function(ranges) {
 		const z = range.zLen;
 
 		uvs.push(
-			0, 0, y, y, z, 0,
-			0, x, 0, 0, z, 0,
-			0, 0, y, y, z, z,
 			0, x, 0, 0, z, z,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, z, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, z, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1
+			0, 0, y, 0, z, z,
+			0, 0, y, 0, z, z,
+			0, x, 0, 0, z, z
+// 			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
+// 			0, 1, 0, 1, z, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, z, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1
 		);
 
 		materialIndex.push(range.type);
