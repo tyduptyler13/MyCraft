@@ -135,10 +135,10 @@ class Player {
 
 		if (fb || lr || up){
 			const dir = new THREE.Vector3(lr,0,fb); //Point relative to where we wanna go. -Z is forward.
-			dir.normalize();
 			dir.applyEuler(this.head.getWorldRotation());
 			dir.y = up ? up : dir.y;
-			dir.multiplyScalar(3 * delta); //Multiply the direction by distance per second and delta.
+			dir.normalize();
+			dir.multiplyScalar(5 * delta); //Multiply the direction by distance per second and delta.
 			this.position.add(dir); //Move there.
 		}
 
