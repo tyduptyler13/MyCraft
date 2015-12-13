@@ -33,6 +33,7 @@ const marchY = function(planeRanges){
 							ranges.push(ele2);
 						}
 						planeRanges[y][a] = ele2;
+						break;
 					}
 				}
 			};
@@ -85,6 +86,7 @@ const marchZ = function(linearRanges){
 							range.push(ele2);
 						}
 						linearRanges[count][a] = ele2;
+						break; //Skip the rest of this loop. We need a new element.
 					}
 				}
 			};
@@ -137,6 +139,13 @@ const marchX = function(typeArray) {
 		}
 
 	}
+
+	ranges.forEach(function(range, index, array){
+		array[index] = range.filter(function(element){
+			if (element.type < 0) return false;
+			return true;
+		});
+	});
 
 	return ranges;
 
@@ -197,7 +206,7 @@ const generate = function(ranges) {
 			[0, 0, -1]
 		].reduce(function (previous, next){
 			//This expansion doesn't seem to matter. I believe the normals are incorrect in a fairly major way.
-			for (var i = 0; i < 2; ++i){ //Expand 6 times for each corner of 2 triangles.
+			for (var i = 0; i < 6; ++i){ //Expand 6 times for each corner of 2 triangles.
 				previous = previous.concat(next);
 			}
 			return previous;
@@ -208,23 +217,25 @@ const generate = function(ranges) {
 		const z = range.zLen;
 
 		uvs.push(
-			0, x, 0, 0, z, z,
-			0, 0, y, 0, z, z,
-			0, 0, y, 0, z, z,
-			0, x, 0, 0, z, z
-// 			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
-// 			0, 1, 0, 1, z, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, z, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
+			0, 1, 0, 1, z, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, z, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1
 		);
 
 		materialIndex.push(range.type);
 
 	});
+
+	console.log(vertices, materialIndex, indices, normals, uvs);
 
 	const data = {
 		position: Float32Array.from(vertices).buffer,
