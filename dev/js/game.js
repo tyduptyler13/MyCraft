@@ -1,10 +1,10 @@
 "use strict";
 var MyCraft = function(){
-	var win = $(window);
+	const win = $(window);
 	var width = win.width();
 	var height = win.height();
 
-	this.chunks = [];
+	this.chunks = {};
 
 	this.scene = new THREE.Scene();
 
@@ -13,10 +13,10 @@ var MyCraft = function(){
 	this.ambientLight = new THREE.AmbientLight(0x404040);
 	this.scene.add(this.ambientLight);
 
-	var renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
+	const renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
 	this.renderer.setSize(width, height);
 
-	var camera = this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000, width, height);
+	const camera = this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000, width, height);
 
 	win.resize(function(){
 		width = win.width();
@@ -35,9 +35,7 @@ var MyCraft = function(){
 
 	$('#game').append(this.renderer.domElement);
 
-	this.player = new Player(this);
-	this.scene.add(this.player.mesh);
-
+	this.setupPlayer();
 	this.setupChunks();
 	this.setupSky(5000, this.player);
 
@@ -57,34 +55,53 @@ var MyCraft = function(){
 	this.render();
 
 }
-MyCraft.prototype.render = function(){
-	var delta = this.timer.getDelta();
+MyCraft.prototype.render = (function(){
 
-	this.stats.begin();
-	this.update(delta);
-	this.renderer.render(this.scene, this.camera);
-	this.stats.end();
-	var scope = this;
-	requestAnimationFrame(function(){scope.render()});
-	//setTimeout(function(){scope.render()}, 1);
-};
+	var vsync = true;
+
+	API.setVsync = function(val){
+		vsync = val;
+		$('#vsync').val(val);
+	};
+
+	$(function(){
+		$('#vsync').change(function(){
+			API.setVsync($(this).is(':checked'));
+		});
+	});
+
+	return function(){
+		const delta = this.timer.getDelta();
+
+		this.stats.begin();
+		this.update(delta);
+		this.renderer.render(this.scene, this.camera);
+		this.stats.end();
+		const render = this.render.bind(this);
+		if (vsync){
+			requestAnimationFrame(render);
+		} else {
+			async.nextTick(render);
+		}
+	};
+})();
 MyCraft.prototype.setupPlayer = function(){
 	/**
 	 * A player is just a 3DObject where the body mesh is all based above the zero. Allowing simple movement and physics.
 	 */
-	var player = new Player(this);
-	this.scene.add(player.mesh);
+	this.player = new Player(this);
+	this.scene.add(this.player.mesh);
 
 };
 MyCraft.prototype.update = function(delta){
-	var scope = this;
+	const scope = this;
 	$.each(this.tasks, function(index, task){
 		task.call(scope, delta);
 	});
 };
 MyCraft.prototype.setupSky = function(distance, parent){
 
-	var skyParams = {
+	const skyParams = {
 		turbidity: 10,
 		reileigh: 2,
 		mieCoefficient: 0.005,
@@ -97,19 +114,19 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	//Sync time to current time.
 	skyParams.inclination = Date.now() / (1800000) % 2;
 
-	var sunSphere = new THREE.Mesh(
+	const sunSphere = new THREE.Mesh(
 		new THREE.SphereBufferGeometry( 20000, 16, 8 ),
 		new THREE.MeshBasicMaterial( { color: 0xffffff } )
 	);
 	sunSphere.visible = false;
 	sunSphere.fog = false;
 
-	var sun = new THREE.DirectionalLight(0xffffff, 1);
+	const sun = new THREE.DirectionalLight(0xffffff, 1);
 	sun.position.copy(sunSphere.position);
 	sun.position.normalize();
 	this.scene.add(sun);
 
-	var sky = new THREE.Sky(distance);
+	const sky = new THREE.Sky(distance);
 	sky.mesh.frustumCulled = false;
 
 	sky.mesh.add(sunSphere);
@@ -120,30 +137,30 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	this.scene.fog = new THREE.FogExp2(0x000000, 0.0025);
 
-	var nightSky = new THREE.Object3D();
+	const nightSky = new THREE.Object3D();
 
-	var starGeo = new THREE.Geometry();
+	const starGeo = new THREE.Geometry();
 
-	var starDist = distance * 0.9;
+	const starDist = distance * 0.9;
 
 	for (var i = 0; i < 10000; ++i){
 
-		var loc = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+		const loc = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
 		loc.normalize().multiplyScalar(starDist);
 		starGeo.vertices.push(loc);
 	}
 
-	var starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0xffffff, fog: false, transparent: true});
+	const starMat = new THREE.PointsMaterial({size: 1, blending: THREE.AdditiveBlending, sizeAttenuation: false, color: 0xffffff, fog: false, transparent: true});
 
-	var stars = new THREE.Points(starGeo, starMat);
+	const stars = new THREE.Points(starGeo, starMat);
 	stars.frustumCulled = false;
 	nightSky.add(stars);
 	nightSky.position.copy(parent.position);
 	this.scene.add(nightSky);
 
-	var uniforms = sky.uniforms;
+	const uniforms = sky.uniforms;
 	uniforms.distance.value = distance;
-	var updateUniforms = function(skyParams){
+	const updateUniforms = function(skyParams){
 		uniforms.turbidity.value = skyParams.turbidity;
 		uniforms.reileigh.value = skyParams.reileigh;
 		uniforms.luminance.value = skyParams.luminance;
@@ -164,12 +181,12 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	updateUniforms(skyParams);
 
-	var night = new THREE.Color(0x001848);
-	var day = new THREE.Color(0xFFFFFF).multiplyScalar(.7);
+	const night = new THREE.Color(0x001848);
+	const day = new THREE.Color(0xFFFFFF).multiplyScalar(.7);
 
 	this.tasks.push(function(){
-		skyParams.inclination = Date.now() / (1800000) % 2;
-		//skyParams.inclination = 0;
+		//skyParams.inclination = Date.now() / (1800000) % 2;
+		skyParams.inclination = 0;
 
 		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 2);
 		sun.intensity = THREE.Math.clamp(sunSphere.position.y + 1, 0, 1);
@@ -194,15 +211,20 @@ MyCraft.prototype.setupSky = function(distance, parent){
 };
 MyCraft.prototype.setupChunks = function(){
 
-	var scope = this;
+	const scope = this;
 
-	for (var x=0; x<10; ++x){
-		for (var y=0; y<4; ++y){
-			for (var z=0; z<10; ++z){
-				var chunk = new Chunk(1);
-				chunk.position.set((x - 5) * 8, (y - 4) * 8, (z - 5) * 8);
+	for (var x=0; x<1; ++x){
+		for (var y=0; y<1; ++y){
+			for (var z=0; z<1; ++z){
+				const chunk = new Chunk(0);
+				for (var x2 = 0; x2 < 8; ++x2){
+					for(var z2 = 0; z2 < 8; ++z2){
+						chunk.set(x2, 3, z2, -1);
+					}
+				}
+				chunk.position.set(x, y, z);
 				scope.scene.add(chunk.space);
-				scope.chunks.push(chunk);
+				scope.chunks[chunk.position.toArray().join(',')] = chunk;
 				chunk.update();
 			}
 		}
@@ -211,11 +233,33 @@ MyCraft.prototype.setupChunks = function(){
 };
 MyCraft.prototype.setupUI = function(){
 	$('#settingsButton').click(function(){
-		$('#settings').slideToggle();
+		const settings = $('#settings');
+		if (settings.is(':visible')){
+			settings.slideUp();
+			$('#overlay').css({
+				'pointer-events': 'none',
+				'background-color': 'transparent'
+			});
+		} else {
+			settings.slideDown();
+			$('#overlay').css({
+				'pointer-events': 'all',
+				'background-color': 'rgba(0,0,0,.7)'
+			});
+		}
+	});
+	$(document).keydown(function(e){
+		if (e.keyCode == 27){
+			$('#settings').slideUp();
+			$('#overlay').css({
+				'pointer-events': 'none',
+				'background-color': 'transparent'
+			});
+		}
 	});
 
-	var max = this.renderer.getMaxAnisotropy();
-	var anisotropy = $('#anisotropy');
+	const max = this.renderer.getMaxAnisotropy();
+	const anisotropy = $('#anisotropy');
 
 	for (var i = 2; i <= max; i *= 2){
 		anisotropy.append('<option value="' + i + '">' + i + '</option>');
@@ -224,7 +268,7 @@ MyCraft.prototype.setupUI = function(){
 	anisotropy.prop('disabled', false);
 
 	anisotropy.change(function(){
-		var val = anisotropy.find(':selected').val();
+		const val = anisotropy.find(':selected').val();
 		API.setAnisotropy(Number(val));
 	});
 }

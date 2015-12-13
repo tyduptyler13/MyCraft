@@ -27,17 +27,27 @@ var API = {};
 </head>
 <body>
 
+<noscript>The following page will be extremely useless for those that have disabled javascript. Sorry but video games require code to work.</noscript>
 <div id="game"></div>
 <div id="overlay">
-	<div id="settings">
+	<div id="settings" class="ui">
 		<h3>Game Settings</h3>
 		<h4>Video Settings</h4>
-		<label for="anisotropy">Anisotropy</label>
-		<select disabled id="anisotropy">
-			<option value="1" selected="selected">1</value>
-		</select>
+		<div>
+			<label for="anisotropy">Anisotropy</label>
+			<select disabled id="anisotropy">
+				<option value="1" selected="selected">1</value>
+			</select>
+		</div>
+		<div>
+			<label for="vsync">Vsync</label>
+			<input id="vsync" type="checkbox" checked value="vsync">
+			<
+		</div>
 	</div>
-	<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
+	<div id="toolbar" class="ui">
+		<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
+	</div>
 </div>
 
 </body>

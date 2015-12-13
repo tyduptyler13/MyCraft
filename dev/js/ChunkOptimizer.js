@@ -1,9 +1,9 @@
 "use strict";
 
-var marchY = function(planeRanges){
+const marchY = function(planeRanges){
 
 	//{Array<{type, x, z, y, lenx, lenz, lenY}>} {type, x, z, lenx, lenz}
-	var ranges = [];
+	const ranges = [];
 
 	var last = null;
 	for (var y = 0; y < 8; ++y){
@@ -13,9 +13,9 @@ var marchY = function(planeRanges){
 			var min = 0;
 
 			for (var a = 0; a < planeRanges[y].length; ++a){
-				var ele = planeRanges[y][a];
+				const ele = planeRanges[y][a];
 				for (var i = min; i < last.length; ++i){
-					var ele2 = last[i];
+					const ele2 = last[i];
 					if (ele.x < ele2.x && ele.z < ele2.z){
 						//No match will be found. However, we cannot just throw away the range, it is still valid.
 						ele.y = y;
@@ -24,7 +24,7 @@ var marchY = function(planeRanges){
 						break;
 					} else if (ele.x > ele2.x && ele.z > ele2.z){
 						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen) {
+					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen && ele.type === ele2.type) {
 						if (ele2.y !== null){ //match on an existing match.
 							ele2.yLen++;
 						} else {
@@ -43,14 +43,16 @@ var marchY = function(planeRanges){
 
 	}
 
+	console.log(ranges);
+
 	return ranges;
 
 };
 
-var marchZ = function(linearRanges){
+const marchZ = function(linearRanges){
 
 	//{Array<Array<type, x, z, lenx, lenz>>} [y]{type, x, z, lenx, lenz}
-	var ranges = [];
+	const ranges = [];
 	var range = [];
 
 	var last = null;
@@ -65,9 +67,9 @@ var marchZ = function(linearRanges){
 			var min = 0;
 
 			for (var a = 0; a < linearRanges[count].length; ++a){
-				var ele = linearRanges[count][a];
+				const ele = linearRanges[count][a];
 				for (var i = min; i < last.length; ++i){
-					var ele2 = last[i];
+					const ele2 = last[i];
 					if (ele.x < ele2.x){
 						//No match will be found. However, we cannot just throw away the range, it is still valid.
 						ele.z = z;
@@ -76,7 +78,7 @@ var marchZ = function(linearRanges){
 						break;
 					} else if (ele.x > ele2.x){
 						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen) {
+					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.type === ele2.type) {
 						if (ele2.z !== null){ //match on an existing match.
 							ele2.zLen++;
 						} else {
@@ -101,13 +103,15 @@ var marchZ = function(linearRanges){
 
 	}
 
+	console.log(ranges);
+
 	return ranges;
 
 };
 
-var marchX = function(typeArray) {
+const marchX = function(typeArray) {
 
-	var ranges = [];
+	const ranges = [];
 
 	var range = [];
 	var cur = null;
@@ -118,12 +122,14 @@ var marchX = function(typeArray) {
 		var x = count % 8;
 
 		if (typeArray[count] !== cur){
-			if (x !== 0){ //not first element.
+
+			if (cur !== null){ //not first element.
 				range.push({type: cur, x: first, y: null, z: null, xLen: x - first, yLen: null, zLen: null});
 			}
 
 			first = x;
 			cur = typeArray[count];
+
 		}
 
 		if (x === 7){ //Last element
@@ -136,27 +142,32 @@ var marchX = function(typeArray) {
 
 	}
 
+	console.log(ranges);
+
 	return ranges;
 
 };
 
-var generate = function(ranges) {
+const generate = function(ranges) {
 
-	var vertices = [];
-	var materialIndex = [];
+	const vertices = [];
+	const materialIndex = [];
 	var indices = [];
 	var normals = [];
 	var uvs = [];
 
 	ranges.forEach(function(range){
-		var px = range.xLen + range.x,
+
+		console.log(range.type, range);
+
+		const px = range.xLen + range.x,
 			py = range.yLen + range.y,
 			pz = range.zLen + range.z,
 			nx = range.x,
 			ny = range.y,
 			nz = range.z;
 
-		var offset = vertices.length;
+		const offset = vertices.length / 3;
 
 		vertices.push(
 			px, py, pz,
@@ -199,23 +210,30 @@ var generate = function(ranges) {
 			return previous;
 		}, []));
 
-		var invX = 1 * range.xLen;
-		var invY = 1 * range.yLen;
-		var invZ = 1 * range.zLen;
+		const x = range.xLen;
+		const y = range.yLen;
+		const z = range.zLen;
 
-		var tmp = [];
-		tmp.push(
-			0, invX, 0, 0, invZ, invZ,
-			0, 0, invY, 0, invZ, invZ
+		uvs.push(
+			0, 0, y, y, z, 0,
+			0, x, 0, 0, z, 0,
+			0, 0, y, y, z, z,
+			0, x, 0, 0, z, z,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, z, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, z, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1,
+			0, 1, 0, 1, 0, 1
 		);
-
-		uvs = uvs.concat(tmp, tmp, tmp, tmp, tmp, tmp);
 
 		materialIndex.push(range.type);
 
 	});
 
-	var data = {
+	const data = {
 		position: Float32Array.from(vertices).buffer,
 		materialIndex: Uint8Array.from(materialIndex).buffer,
 		indices: Uint16Array.from(indices).buffer,

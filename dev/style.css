@@ -3,6 +3,7 @@ html, body {
     height: 100%;
     margin: 0;
     overflow: hidden;
+    color: white;
 }
 
 #game {
@@ -23,10 +24,42 @@ html, body {
 }
 
 #settings {
-    margin: auto;
+    position: fixed;
     width: 400px;
+    height: 300px;
+    margin-top: -150px;
+    margin-left: -200px;
+    top: 50%;
+    left: 50%;
+    display: none;
+}
+
+#toolbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+}
+
+#toolbar > * {
+    border: 1px black solid;
+    border-left: none;
+}
+
+#toolbar > *:first-child {
+    border-left: 1px black solid;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+#toolbar > *:last-child {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.ui {
     background-color: black;
-    background-image: url(http://www.pixempire.com/images/preview/dark-background-with-pattern.jpg);
+    background-image: url(images/background.jpg);
     background-position: center center;
     border: 1px white solid;
     border-radius: 3px;
@@ -34,13 +67,4 @@ html, body {
     text-shadow: black 1px 1px 2px;
     color: white;
     pointer-events: all;
-    display: none;
-}
-
-#settingsButton {
-    position: fixed;
-    top: 0;
-    right: 0;
-    pointer-events: all;
-    cursor: pointer;
 }
