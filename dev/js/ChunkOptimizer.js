@@ -1,6 +1,6 @@
 "use strict";
 
-var marchY = function(planeRanges){
+const marchY = function(planeRanges){
 
 	//{Array<{type, x, z, y, lenx, lenz, lenY}>} {type, x, z, lenx, lenz}
 	var ranges = [];
@@ -12,10 +12,10 @@ var marchY = function(planeRanges){
 
 			var min = 0;
 
-			for (var a = 0; a < planeRanges[y].length; ++a){
-				var ele = planeRanges[y][a];
-				for (var i = min; i < last.length; ++i){
-					var ele2 = last[i];
+			for (var a = 0, length = planeRanges[y].length; a < length; ++a){
+				const ele = planeRanges[y][a];
+				for (var i = min, llength = last.length; i < llength; ++i){
+					const ele2 = last[i];
 					if (ele.x < ele2.x && ele.z < ele2.z){
 						//No match will be found. However, we cannot just throw away the range, it is still valid.
 						ele.y = y;
@@ -24,7 +24,7 @@ var marchY = function(planeRanges){
 						break;
 					} else if (ele.x > ele2.x && ele.z > ele2.z){
 						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen) {
+					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen && ele.type === ele2.type) {
 						if (ele2.y !== null){ //match on an existing match.
 							ele2.yLen++;
 						} else {
@@ -33,10 +33,17 @@ var marchY = function(planeRanges){
 							ranges.push(ele2);
 						}
 						planeRanges[y][a] = ele2;
+						break;
 					}
 				}
-			};
+			}
 
+		} else if (planeRanges[y + 1].length === 0) { //Special case where strips of single blocks are forgotten.
+			ranges = ranges.concat(planeRanges[y].map(function(val){
+				val.y = 0;
+				val.yLen = 1;
+				return val;
+			}));
 		}
 
 		last = planeRanges[y];
@@ -47,10 +54,10 @@ var marchY = function(planeRanges){
 
 };
 
-var marchZ = function(linearRanges){
+const marchZ = function(linearRanges){
 
 	//{Array<Array<type, x, z, lenx, lenz>>} [y]{type, x, z, lenx, lenz}
-	var ranges = [];
+	const ranges = [];
 	var range = [];
 
 	var last = null;
@@ -65,9 +72,9 @@ var marchZ = function(linearRanges){
 			var min = 0;
 
 			for (var a = 0; a < linearRanges[count].length; ++a){
-				var ele = linearRanges[count][a];
+				const ele = linearRanges[count][a];
 				for (var i = min; i < last.length; ++i){
-					var ele2 = last[i];
+					const ele2 = last[i];
 					if (ele.x < ele2.x){
 						//No match will be found. However, we cannot just throw away the range, it is still valid.
 						ele.z = z;
@@ -76,7 +83,7 @@ var marchZ = function(linearRanges){
 						break;
 					} else if (ele.x > ele2.x){
 						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen) {
+					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.type === ele2.type) {
 						if (ele2.z !== null){ //match on an existing match.
 							ele2.zLen++;
 						} else {
@@ -85,10 +92,17 @@ var marchZ = function(linearRanges){
 							range.push(ele2);
 						}
 						linearRanges[count][a] = ele2;
+						break; //Skip the rest of this loop. We need a new element.
 					}
 				}
-			};
+			}
 
+		} else if (linearRanges[z + 1].length === 0) { //Special case where strips of single blocks are forgotten.
+			ranges = ranges.concat(linearRanges[z].map(function(val){
+				val.z = 0;
+				val.zLen = 1;
+				return val;
+			}));
 		}
 
 		if (z === 7){
@@ -105,9 +119,9 @@ var marchZ = function(linearRanges){
 
 };
 
-var marchX = function(typeArray) {
+const marchX = function(typeArray) {
 
-	var ranges = [];
+	const ranges = [];
 
 	var range = [];
 	var cur = null;
@@ -118,12 +132,14 @@ var marchX = function(typeArray) {
 		var x = count % 8;
 
 		if (typeArray[count] !== cur){
-			if (x !== 0){ //not first element.
+
+			if (cur !== null){ //not first element.
 				range.push({type: cur, x: first, y: null, z: null, xLen: x - first, yLen: null, zLen: null});
 			}
 
 			first = x;
 			cur = typeArray[count];
+
 		}
 
 		if (x === 7){ //Last element
@@ -136,39 +152,25 @@ var marchX = function(typeArray) {
 
 	}
 
+	ranges.forEach(function(range, index, array){
+		array[index] = range.filter(function(element){
+			if (element.type < 0) return false;
+			return true;
+		});
+	});
+
 	return ranges;
 
 };
 
-var generate = function(ranges) {
+const generate = function(ranges) {
 
-	var vertices = [];
-	var materialIndex = [];
-	var indices = [];
-	var normals = [];
-	var uvs = [];
+	const vertices = new Float32Array(ranges.length * 108);
+	const materialIndex = [];
+	const normals = new Float32Array(ranges.length * 108);
+	const uvs = new Float32Array(ranges.length * 72);
 
-	ranges.forEach(function(range){
-		var px = range.xLen + range.x,
-			py = range.yLen + range.y,
-			pz = range.zLen + range.z,
-			nx = range.x,
-			ny = range.y,
-			nz = range.z;
-
-		var offset = vertices.length;
-
-		vertices.push(
-			px, py, pz,
-			px, py, nz,
-			px, ny, pz,
-			px, ny, nz,
-			nx, py, nz,
-			nx, py, pz,
-			nx, ny, nz,
-			nx, ny, pz);
-
-		indices = indices.concat([
+	const indices = [
 			0, 2, 1,
 			2, 3, 1,
 			4, 6, 5,
@@ -181,49 +183,82 @@ var generate = function(ranges) {
 			7, 2, 0,
 			1, 3, 4,
 			3, 6, 4
-		].map(function(val){ //Offset all the values.
-			return val + offset;
-		}));
+	];
 
-		normals = normals.concat([
-			[1, 0, 0],
-			[-1, 0, 0],
-			[0, 1, 0],
-			[0, -1, 0],
-			[0, 0, 1],
-			[0, 0, -1]
-		].reduce(function (previous, next){
-			for (var i = 0; i < 6; ++i){ //Expand 6 times for each corner of 2 triangles.
-				previous = previous.concat(next);
-			}
-			return previous;
-		}, []));
+	const norms = [ //Precalculated norms
+		[1, 0, 0],
+		[-1, 0, 0],
+		[0, 1, 0],
+		[0, -1, 0],
+		[0, 0, 1],
+		[0, 0, -1]
+	].reduce(function (previous, next){
+		return previous.concat(next, next, next, next, next, next); //Expand 6 times for each corner of 2 triangles.
+	}, []);
 
-		var invX = 1 * range.xLen;
-		var invY = 1 * range.yLen;
-		var invZ = 1 * range.zLen;
+	for (var r = 0, l = ranges.length; r < l; ++r){
 
-		var tmp = [];
-		tmp.push(
-			0, invX, 0, 0, invZ, invZ,
-			0, 0, invY, 0, invZ, invZ
-		);
+		const range = ranges[r];
 
-		uvs = uvs.concat(tmp, tmp, tmp, tmp, tmp, tmp);
+		const px = range.xLen + range.x,
+			py = range.yLen + range.y,
+			pz = range.zLen + range.z,
+			nx = range.x,
+			ny = range.y,
+			nz = range.z;
+
+		const verts = [
+			[px, py, pz],
+			[px, py, nz],
+			[px, ny, pz],
+			[px, ny, nz],
+			[nx, py, nz],
+			[nx, py, pz],
+			[nx, ny, nz],
+			[nx, ny, pz]
+		];
+
+		for (var t = 0, l2 = indices.length; t < l2; ++t){
+			vertices[t * 3 + r * 108] = verts[indices[t]][0];
+			vertices[t * 3 + r * 108 + 1] = verts[indices[t]][1];
+			vertices[t * 3 + r * 108 + 2] = verts[indices[t]][2];
+		}
+
+		normals.set(norms, r * 108); //Push another precalculcated norms onto the result.
+
+		const x = range.xLen;
+		const y = range.yLen;
+		const z = range.zLen;
+
+		uvs.set([
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1
+		], r * 72);
 
 		materialIndex.push(range.type);
 
-	});
-
-	var data = {
-		position: Float32Array.from(vertices).buffer,
-		materialIndex: Uint8Array.from(materialIndex).buffer,
-		indices: Uint16Array.from(indices).buffer,
-		normals: Float32Array.from(normals).buffer,
-		uvs: Float32Array.from(uvs).buffer
 	}
 
-	self.postMessage(data, [data.position, data.materialIndex, data.indices, data.normals, data.uvs]);
+	console.log(vertices, materialIndex, normals, uvs);
+
+	const data = {
+		position: vertices.buffer,
+		materialIndex: Uint8Array.from(materialIndex).buffer,
+		normals: normals.buffer,
+		uvs: uvs.buffer
+	}
+
+	self.postMessage(data, [data.position, data.materialIndex, data.normals, data.uvs]);
 
 }
 
