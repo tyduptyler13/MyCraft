@@ -68,3 +68,37 @@ html, body {
     color: white;
     pointer-events: all;
 }
+
+#musicUI {
+	color: white;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+	width: 20px;
+	height: 20px;
+	opacity: 0.8;
+}
+
+#musicUI:hover {
+	color: white;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+	width: auto;
+	height: auto;
+}
+
+#musicTitle {
+	color: white;
+	background-color: black;
+    position: fixed;
+    bottom: 0;
+    right: 1;
+	width: auto;
+	height: auto;
+	opacity: 1.0;
+}
