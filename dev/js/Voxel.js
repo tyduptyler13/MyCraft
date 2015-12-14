@@ -130,7 +130,7 @@ class Chunk {
 		var geometry = this.geometry = new THREE.BufferGeometry();
 		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
-			index: new THREE.BufferAttribute(new Uint16Array(), 1),
+//			index: new THREE.BufferAttribute(new Uint16Array(), 1),
 			uv: new THREE.BufferAttribute(new Float32Array(), 2),
 			normal: new THREE.BufferAttribute(new Float32Array(), 3),
 //			colors: new THREE.BufferAttribute(new Uint8Array(), 3)
@@ -138,7 +138,7 @@ class Chunk {
 		geometry.addAttribute('position', this.attributes.position);
 		geometry.addAttribute('uv', this.attributes.uv);
 		geometry.addAttribute('normal', this.attributes.normal);
-		geometry.setIndex(this.attributes.index);
+//		geometry.setIndex(this.attributes.index);
 		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
@@ -199,8 +199,8 @@ class Chunk {
 			scope.attributes['normal'].needsUpdate = true;
 			scope.attributes['uv'].array = new Float32Array(data.uvs);
 			scope.attributes['uv'].needsUpdate = true;
-			scope.attributes['index'].array = new Uint16Array(data.indices);
-			scope.attributes['index'].needsUpdate = true;
+//			scope.attributes['index'].array = new Uint16Array(data.indices);
+//			scope.attributes['index'].needsUpdate = true;
 //			scope.attributes['colors'].array = new Uint8Array(scope.attributes['position'].array.length).fill(255);
 //			scope.attributes['colors'].needsUpdate = true;
 
@@ -210,7 +210,7 @@ class Chunk {
 			//scope.geometry.computeVertexNormals();
 
 			for (var i = 0; i < materials.length; ++i){
-				scope.geometry.addGroup(36 * i, 36, materials[i]);
+				scope.geometry.addGroup(108 * i, 108, materials[i]);
 			}
 
 			if (!scope.added){

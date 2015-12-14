@@ -165,34 +165,12 @@ const marchX = function(typeArray) {
 
 const generate = function(ranges) {
 
-	const vertices = [];
+	const vertices = new Float32Array(ranges.length * 108);
 	const materialIndex = [];
-	var indices = [];
-	var normals = [];
-	var uvs = [];
+	const normals = new Float32Array(ranges.length * 108);
+	const uvs = new Float32Array(ranges.length * 72);
 
-	ranges.forEach(function(range){
-
-		const px = range.xLen + range.x,
-			py = range.yLen + range.y,
-			pz = range.zLen + range.z,
-			nx = range.x,
-			ny = range.y,
-			nz = range.z;
-
-		const offset = vertices.length / 3;
-
-		vertices.push(
-			px, py, pz,
-			px, py, nz,
-			px, ny, pz,
-			px, ny, nz,
-			nx, py, nz,
-			nx, py, pz,
-			nx, ny, nz,
-			nx, ny, pz);
-
-		indices = indices.concat([
+	const indices = [
 			0, 2, 1,
 			2, 3, 1,
 			4, 6, 5,
@@ -205,67 +183,82 @@ const generate = function(ranges) {
 			7, 2, 0,
 			1, 3, 4,
 			3, 6, 4
-		].map(function(val){ //Offset all the values.
-			return val + offset;
-		}));
+	];
 
-		normals = normals.concat([
-			[1, 0, 0],
-			[-1, 0, 0],
-			[0, 1, 0],
-			[0, -1, 0],
-			[0, 0, 1],
-			[0, 0, -1]
-		].reduce(function (previous, next){
-			//This expansion doesn't seem to matter. I believe the normals are incorrect in a fairly major way.
-			for (var i = 0; i < 6; ++i){ //Expand 6 times for each corner of 2 triangles.
-				previous = previous.concat(next);
-			}
-			return previous;
-		}, []));
+	const norms = [ //Precalculated norms
+		[1, 0, 0],
+		[-1, 0, 0],
+		[0, 1, 0],
+		[0, -1, 0],
+		[0, 0, 1],
+		[0, 0, -1]
+	].reduce(function (previous, next){
+		return previous.concat(next, next, next, next, next, next); //Expand 6 times for each corner of 2 triangles.
+	}, []);
+
+	for (var r = 0, l = ranges.length; r < l; ++r){
+
+		const range = ranges[r];
+
+		const px = range.xLen + range.x,
+			py = range.yLen + range.y,
+			pz = range.zLen + range.z,
+			nx = range.x,
+			ny = range.y,
+			nz = range.z;
+
+		const verts = [
+			[px, py, pz],
+			[px, py, nz],
+			[px, ny, pz],
+			[px, ny, nz],
+			[nx, py, nz],
+			[nx, py, pz],
+			[nx, ny, nz],
+			[nx, ny, pz]
+		];
+
+		for (var t = 0, l2 = indices.length; t < l2; ++t){
+			vertices[t * 3 + r * 108] = verts[indices[t]][0];
+			vertices[t * 3 + r * 108 + 1] = verts[indices[t]][1];
+			vertices[t * 3 + r * 108 + 2] = verts[indices[t]][2];
+		}
+
+		normals.set(norms, r * 108); //Push another precalculcated norms onto the result.
 
 		const x = range.xLen;
 		const y = range.yLen;
 		const z = range.zLen;
 
-		uvs.push(
-			0, 1,
-			0, 0,
-			1, 1,
-			0, 1,
-			1, 0,
-			1, 1,
-			0, 0,
-			1, 0
-// 			0, 0 //No complaits about missing peices from here on.
-// 			0, 0,
-// 			0, 0,
-// 			0, 0
-// 			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
-// 			0, 1, 0, 1, z, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, z, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1,
-// 			0, 1, 0, 1, 0, 1
-		);
+		uvs.set([
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1,
+			0, 1, 0, 0, 1, 1,
+			0, 0, 1, 0, 1, 1
+		], r * 72);
 
 		materialIndex.push(range.type);
 
-	});
-
-	console.log(vertices, materialIndex, indices, normals, uvs);
-
-	const data = {
-		position: Float32Array.from(vertices).buffer,
-		materialIndex: Uint8Array.from(materialIndex).buffer,
-		indices: Uint16Array.from(indices).buffer,
-		normals: Float32Array.from(normals).buffer,
-		uvs: Float32Array.from(uvs).buffer
 	}
 
-	self.postMessage(data, [data.position, data.materialIndex, data.indices, data.normals, data.uvs]);
+	console.log(vertices, materialIndex, normals, uvs);
+
+	const data = {
+		position: vertices.buffer,
+		materialIndex: Uint8Array.from(materialIndex).buffer,
+		normals: normals.buffer,
+		uvs: uvs.buffer
+	}
+
+	self.postMessage(data, [data.position, data.materialIndex, data.normals, data.uvs]);
 
 }
 
