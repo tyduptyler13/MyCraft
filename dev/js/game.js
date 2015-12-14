@@ -95,7 +95,7 @@ MyCraft.prototype.setupPlayer = function(){
 };
 MyCraft.prototype.update = function(delta){
 	const scope = this;
-	$.each(this.tasks, function(index, task){
+	async.each(this.tasks, function(task, callback){
 		task.call(scope, delta);
 		callback();
 	});
