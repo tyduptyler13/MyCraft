@@ -3,7 +3,7 @@
 const marchY = function(planeRanges){
 
 	//{Array<{type, x, z, y, lenx, lenz, lenY}>} {type, x, z, lenx, lenz}
-	const ranges = [];
+	var ranges = [];
 
 	var last = null;
 	for (var y = 0; y < 8; ++y){
@@ -12,9 +12,9 @@ const marchY = function(planeRanges){
 
 			var min = 0;
 
-			for (var a = 0; a < planeRanges[y].length; ++a){
+			for (var a = 0, length = planeRanges[y].length; a < length; ++a){
 				const ele = planeRanges[y][a];
-				for (var i = min; i < last.length; ++i){
+				for (var i = min, llength = last.length; i < llength; ++i){
 					const ele2 = last[i];
 					if (ele.x < ele2.x && ele.z < ele2.z){
 						//No match will be found. However, we cannot just throw away the range, it is still valid.
@@ -36,8 +36,14 @@ const marchY = function(planeRanges){
 						break;
 					}
 				}
-			};
+			}
 
+		} else if (planeRanges[y + 1].length === 0) { //Special case where strips of single blocks are forgotten.
+			ranges = ranges.concat(planeRanges[y].map(function(val){
+				val.y = 0;
+				val.yLen = 1;
+				return val;
+			}));
 		}
 
 		last = planeRanges[y];
@@ -89,8 +95,14 @@ const marchZ = function(linearRanges){
 						break; //Skip the rest of this loop. We need a new element.
 					}
 				}
-			};
+			}
 
+		} else if (linearRanges[z + 1].length === 0) { //Special case where strips of single blocks are forgotten.
+			ranges = ranges.concat(linearRanges[z].map(function(val){
+				val.z = 0;
+				val.zLen = 1;
+				return val;
+			}));
 		}
 
 		if (z === 7){
@@ -217,18 +229,26 @@ const generate = function(ranges) {
 		const z = range.zLen;
 
 		uvs.push(
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
-			0, 1, 0, 1, z, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, z, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1,
-			0, 1, 0, 1, 0, 1
+			0, 1,
+			0, 0,
+			1, 1,
+			0, 1,
+			1, 0,
+			1, 1,
+			0, 0,
+			1, 0
+// 			0, 0 //No complaits about missing peices from here on.
+// 			0, 0,
+// 			0, 0,
+// 			0, 0
+// 			0, 1, 0, 1, 0, 1, //Why don't these matter? (No effect if removed or altered)
+// 			0, 1, 0, 1, z, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, z, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1,
+// 			0, 1, 0, 1, 0, 1
 		);
 
 		materialIndex.push(range.type);

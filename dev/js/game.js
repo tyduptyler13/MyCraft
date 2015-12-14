@@ -214,7 +214,7 @@ MyCraft.prototype.setupChunks = function(){
 	const scope = this;
 
 
-	const chunk = new Chunk(0);
+	const chunk = new Chunk(3);
 	for (var x2 = 0; x2 < 8; ++x2){
 		for(var z2 = 0; z2 < 8; ++z2){
 			chunk.set(x2, 3, z2, -1);
@@ -222,12 +222,12 @@ MyCraft.prototype.setupChunks = function(){
 	}
 	for (var y2 = 0; y2 < 8; ++y2){
 		for(var z2 = 0; z2 < 8; ++z2){
-			chunk.set(3, y2, z2, -1);
+			chunk.set(2, y2, z2, -1);
 		}
 	}
 	for (var y2 = 0; y2 < 8; ++y2){
 		for(var x2 = 0; x2 < 8; ++x2){
-			chunk.set(x2, y2, 3, -1);
+			chunk.set(x2, y2, 1, -1);
 		}
 	}
 	chunk.position.set(0, -8, 0);

@@ -2,5 +2,9 @@
 	"-1": {"name": "void", "solid": false, "hazard": 1},
 	"-2": {"name": "air", "solid": false},
 	"0": {"name": "rock", "diffuseMap": "images/shinyRock-diffuse.jpg", "specularMap": "images/shinyRock-spec.jpg", "normalMap": "images/shinyRock-normal.jpg"},
-	"1": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"}
+	"1": {"name": "rock2", "diffuseMap": "images/rockFrac-diffuse.jpg", "normalMap": "images/rockFrac-normal.jpg"},
+	"2": {"name": "stonebrick", "diffuseMap": "images/stoneBrick-diffuse.jpg", "normalMap": "images/stoneBrick-normal.jpg"},
+	"3": {"name": "metalplate", "diffuseMap": "images/metalPlate-diffuse.jpg", "specularMap": "images/metalPlate-spec.jpg", "normalMap": "images/metalPlate-normal.jpg"},
+	"4": {"name": "woodplanks", "diffuseMap": "images/woodPlanks-diffuse.jpg", "specularMap": "images/woodPlanks-spec.jpg", "normalMap": "images/woodPlanks-normal.jpg"},
+	"5": {"name": "sand", "diffuseMap": "images/sand-diffuse.jpg", "specularMap": "images/sand-spec.jpg"}
 }
