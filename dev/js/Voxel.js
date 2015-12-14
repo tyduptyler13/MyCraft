@@ -128,6 +128,7 @@ class Chunk {
 		this.space = new THREE.Object3D();
 		this.added = false;
 		var geometry = this.geometry = new THREE.BufferGeometry();
+		geometry.frustumCulled = false;
 		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
 //			index: new THREE.BufferAttribute(new Uint16Array(), 1),

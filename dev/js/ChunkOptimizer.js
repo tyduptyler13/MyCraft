@@ -57,7 +57,7 @@ const marchY = function(planeRanges){
 const marchZ = function(linearRanges){
 
 	//{Array<Array<type, x, z, lenx, lenz>>} [y]{type, x, z, lenx, lenz}
-	const ranges = [];
+	var ranges = [];
 	var range = [];
 
 	var last = null;

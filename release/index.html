@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MyCraft</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+
+<link href="style.css" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.5.0/async.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+
+<script>
+//Public global variables.
+var API = {};
+</script>
+
+<script src="js/MyCraft.min.js"></script>
+
+</head>
+<body>
+
+<noscript>The following page will be extremely useless for those that have disabled javascript. Sorry but video games require code to work.</noscript>
+<div id="game"></div>
+<div id="overlay">
+	<div id="settings" class="ui">
+		<h3>Game Settings</h3>
+		<h4>Video Settings</h4>
+		<div>
+			<label for="anisotropy">Anisotropy</label>
+			<select disabled id="anisotropy">
+				<option value="1" selected="selected">1</value>
+			</select>
+		</div>
+		<div>
+			<label for="vsync">Vsync</label>
+			<input id="vsync" type="checkbox" checked value="vsync">
+			<span>Note: this does not mean 100% framerate, it relies on your javascript engine spinning quickly.</span>
+		</div>
+	</div>
+	<div id="toolbar" class="ui">
+		<button id="settingsButton" type="button"><i class="fa fa-wrench"></i></button>
+	</div>
+</div>
+
+</body>
+</html>

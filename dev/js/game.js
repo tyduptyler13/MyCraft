@@ -95,8 +95,9 @@ MyCraft.prototype.setupPlayer = function(){
 };
 MyCraft.prototype.update = function(delta){
 	const scope = this;
-	$.each(this.tasks, function(index, task){
+	async.each(this.tasks, function(task, callback){
 		task.call(scope, delta);
+		callback();
 	});
 };
 MyCraft.prototype.setupSky = function(distance, parent){
@@ -108,7 +109,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		mieDirectionalG: 0.8,
 		luminance: 1,
 		inclination: 0.49, // elevation / inclination
-		azimuth: 0.25, // Facing front,
+		azimuth: 0.3, // Facing front,
 	};
 
 	//Sync time to current time.
@@ -282,7 +283,7 @@ MyCraft.prototype.setupUI = function(){
 		const val = anisotropy.find(':selected').val();
 		API.setAnisotropy(Number(val));
 	});
-}
+};
 
 $(function(){
 
