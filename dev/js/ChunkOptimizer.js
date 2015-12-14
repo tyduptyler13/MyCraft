@@ -14,26 +14,33 @@ const marchY = function(planeRanges){
 
 			for (var a = 0, length = planeRanges[y].length; a < length; ++a){
 				const ele = planeRanges[y][a];
-				for (var i = min, llength = last.length; i < llength; ++i){
-					const ele2 = last[i];
-					if (ele.x < ele2.x && ele.z < ele2.z){
-						//No match will be found. However, we cannot just throw away the range, it is still valid.
-						ele.y = y;
-						ele.yLen = 1;
-						ranges.push(ele);
-						break;
-					} else if (ele.x > ele2.x && ele.z > ele2.z){
-						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen && ele.type === ele2.type) {
-						if (ele2.y !== null){ //match on an existing match.
-							ele2.yLen++;
-						} else {
-							ele2.y = y - 1; //We matched the previous row.
-							ele2.yLen = 2; //The length starts at 2, always.
-							ranges.push(ele2);
+
+				if (last.length === 0){
+					ele.y = y;
+					ele.yLen = 1;
+					ranges.push(ele);
+				} else {
+					for (var i = min, llength = last.length; i < llength; ++i){
+						const ele2 = last[i];
+						if (ele.x < ele2.x && ele.z < ele2.z){
+							//No match will be found. However, we cannot just throw away the range, it is still valid.
+							ele.y = y;
+							ele.yLen = 1;
+							ranges.push(ele);
+							break;
+						} else if (ele.x > ele2.x && ele.z > ele2.z){
+							min = i;
+						} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.z === ele2.z && ele.zLen === ele2.zLen && ele.type === ele2.type) {
+							if (ele2.y !== null){ //match on an existing match.
+								ele2.yLen++;
+							} else {
+								ele2.y = y - 1; //We matched the previous row.
+								ele2.yLen = 2; //The length starts at 2, always.
+								ranges.push(ele2);
+							}
+							planeRanges[y][a] = ele2;
+							break;
 						}
-						planeRanges[y][a] = ele2;
-						break;
 					}
 				}
 			}
@@ -71,30 +78,38 @@ const marchZ = function(linearRanges){
 
 			var min = 0;
 
-			for (var a = 0; a < linearRanges[count].length; ++a){
+			for (var a = 0, l = linearRanges[count].length; a < l; ++a){
 				const ele = linearRanges[count][a];
-				for (var i = min; i < last.length; ++i){
-					const ele2 = last[i];
-					if (ele.x < ele2.x){
-						//No match will be found. However, we cannot just throw away the range, it is still valid.
-						ele.z = z;
-						ele.zLen = 1;
-						range.push(ele);
-						break;
-					} else if (ele.x > ele2.x){
-						min = i;
-					} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.type === ele2.type) {
-						if (ele2.z !== null){ //match on an existing match.
-							ele2.zLen++;
-						} else {
-							ele2.z = z - 1; //We matched the previous row
-							ele2.zLen = 2; //The length starts at 2, always.
-							range.push(ele2);
+
+				if (last.length === 0){ //Special case.
+					ele.z = z;
+					ele.zLen = 1;
+					range.push(ele);
+				} else {
+					for (var i = min, l2 = last.length; i < l2; ++i){
+						const ele2 = last[i];
+						if (ele.x < ele2.x){
+							//No match will be found. However, we cannot just throw away the range, it is still valid.
+							ele.z = z;
+							ele.zLen = 1;
+							range.push(ele);
+							break;
+						} else if (ele.x > ele2.x){
+							min = i;
+						} else if (ele.x === ele2.x && ele.xLen === ele2.xLen && ele.type === ele2.type) {
+							if (ele2.z !== null){ //match on an existing match.
+								ele2.zLen++;
+							} else {
+								ele2.z = z - 1; //We matched the previous row
+								ele2.zLen = 2; //The length starts at 2, always.
+								range.push(ele2);
+							}
+							linearRanges[count][a] = ele2;
+							break; //Skip the rest of this loop. We need a new element.
 						}
-						linearRanges[count][a] = ele2;
-						break; //Skip the rest of this loop. We need a new element.
 					}
 				}
+
 			}
 
 		} else if (linearRanges[z + 1].length === 0) { //Special case where strips of single blocks are forgotten.
@@ -231,25 +246,23 @@ const generate = function(ranges) {
 		const z = range.zLen;
 
 		uvs.set([
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1,
-			0, 1, 0, 0, 1, 1,
-			0, 0, 1, 0, 1, 1
+			0, y, 0, 0, z, y,
+			0, 0, z, 0, z, y,
+			0, y, 0, 0, z, y,
+			0, 0, z, 0, z, y,
+			0, z, 0, 0, x, z,
+			0, 0, x, 0, x, z,
+			0, z, 0, 0, x, z,
+			0, 0, x, 0, x, z,
+			0, y, 0, 0, x, y,
+			0, 0, x, 0, x, y,
+			0, y, 0, 0, x, y,
+			0, 0, x, 0, x, y
 		], r * 72);
 
 		materialIndex.push(range.type);
 
 	}
-
-	console.log(vertices, materialIndex, normals, uvs);
 
 	const data = {
 		position: vertices.buffer,
