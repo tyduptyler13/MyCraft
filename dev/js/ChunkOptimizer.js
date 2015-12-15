@@ -277,6 +277,20 @@ const generate = function(ranges) {
 
 self.addEventListener('message',function(e){
 
-	generate(marchY(marchZ(marchX(new Int8Array(e.data)))));
+	const data = new Int8Array(e.data);
+
+	var visible = false;
+	for (var i = 0; i < 512; ++i){
+		if (data[i]>=0){
+			visible = true;
+			break;
+		}
+	}
+
+	if (visible){
+		generate(marchY(marchZ(marchX(data))));
+	} else {
+		generate([]);
+	}
 
 });

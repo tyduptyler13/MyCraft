@@ -209,6 +209,10 @@ class Chunk {
 				scope.geometry.addGroup(108 * i, 108, materials[i]);
 			}
 
+			if (materials.length === 0){
+				scope.space.visible = false;
+			}
+
 			if (!scope.added){
 				API.onBlocksReady(function(){
 					scope.space.add(scope.mesh);
