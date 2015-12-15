@@ -16,8 +16,8 @@ var MyCraft = function(){
 	const renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
 	this.renderer.setSize(width, height);
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMapCascade = true;
-	//renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+	//renderer.shadowMapCascade = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 	const camera = this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100, width, height);
 
@@ -132,12 +132,12 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	sun.castShadow = true;
 	sun.shadowCameraNear = -90;
 	sun.shadowCameraFar = 90;
-	sun.shadowCameraLeft = -90;
-	sun.shadowCameraRight = 90;
-	sun.shadowCameraTop = 90;
-	sun.shadowCameraBottom = -90;
-	sun.shadowMapWidth = 1024;
-	sun.shadowMapHeight = 1024;
+	sun.shadowCameraLeft = -75;
+	sun.shadowCameraRight = 75;
+	sun.shadowCameraTop = 60;
+	sun.shadowCameraBottom = -60;
+	sun.shadowMapWidth = 2048;
+	sun.shadowMapHeight = 2048;
 	sun.target = this.player.mesh;
 	this.scene.add(new THREE.DirectionalLightHelper(sun, 100));
 
