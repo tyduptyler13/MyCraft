@@ -14,6 +14,11 @@ class Player {
 		$('#game > canvas').click(function(){
 			controlsEnabled = true;
 			//this = the game element.
+
+			this.requestPointerLock = this.requestPointerLock ||
+                            this.mozRequestPointerLock ||
+                            this.webkitRequestPointerLock;
+
 			this.requestPointerLock();
 		});
 

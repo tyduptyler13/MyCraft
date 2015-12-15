@@ -15,7 +15,7 @@ class ThreadPool {
 		this.threads = [];
 		this.valid = true;
 
-		threads = threads || navigator.hardwareConcurrency;
+		threads = threads || navigator.hardwareConcurrency || 12; //If no concurrency info is available spawn a ton of threads.
 
 		var scope = this;
 

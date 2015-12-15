@@ -1,14 +1,14 @@
 "use strict";
 
 (function(){
-	var matCache = {};
-	var texCache = {};
-	var loader = new THREE.TextureLoader();
+	const matCache = {};
+	const texCache = {};
+	const loader = new THREE.TextureLoader();
 	var BlockData = {};
-	var BlockMaterial = new THREE.MultiMaterial();
+	const BlockMaterial = new THREE.MultiMaterial();
 	BlockMaterial.visible = false;
 	var ready = false;
-	var onReady = [];
+	const onReady = [];
 
 	API.getMaterial =  function(type, callback){
 
@@ -38,7 +38,7 @@
 				throw err;
 			}
 
-			var material = new THREE.MeshPhongMaterial({
+			const material = new THREE.MeshPhongMaterial({
 				map: texCache[type]['diffuseMap'],
 				specularMap: texCache[type]['specularMap'],
 				normalMap: texCache[type]['normalMap'],
@@ -119,7 +119,7 @@
 
 })();
 
-var chunkPool = new ThreadPool('js/ChunkOptimizer.js');
+const chunkPool = new ThreadPool('js/ChunkOptimizer.js');
 
 class Chunk {
 
@@ -131,15 +131,12 @@ class Chunk {
 		geometry.frustumCulled = false;
 		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
-//			index: new THREE.BufferAttribute(new Uint16Array(), 1),
 			uv: new THREE.BufferAttribute(new Float32Array(), 2),
-			normal: new THREE.BufferAttribute(new Float32Array(), 3),
-//			colors: new THREE.BufferAttribute(new Uint8Array(), 3)
+			normal: new THREE.BufferAttribute(new Float32Array(), 3)
 		}; //Reserved for master block.
 		geometry.addAttribute('position', this.attributes.position);
 		geometry.addAttribute('uv', this.attributes.uv);
 		geometry.addAttribute('normal', this.attributes.normal);
-//		geometry.setIndex(this.attributes.index);
 		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
@@ -190,6 +187,8 @@ class Chunk {
 
 		var scope = this;
 
+		//console.log("Updating chunk");
+
 		chunkPool.run(this.blocks.slice(0), function(e){
 
 			var data = e.data;
@@ -200,15 +199,10 @@ class Chunk {
 			scope.attributes['normal'].needsUpdate = true;
 			scope.attributes['uv'].array = new Float32Array(data.uvs);
 			scope.attributes['uv'].needsUpdate = true;
-//			scope.attributes['index'].array = new Uint16Array(data.indices);
-//			scope.attributes['index'].needsUpdate = true;
-//			scope.attributes['colors'].array = new Uint8Array(scope.attributes['position'].array.length).fill(255);
-//			scope.attributes['colors'].needsUpdate = true;
 
 			var materials = new Uint8Array(data.materialIndex);
 
 			scope.geometry.clearGroups();
-			//scope.geometry.computeVertexNormals();
 
 			for (var i = 0; i < materials.length; ++i){
 				scope.geometry.addGroup(108 * i, 108, materials[i]);
@@ -221,7 +215,7 @@ class Chunk {
 				scope.added = true;
 			}
 
-			//console.log("Chunk optimized:", scope.attributes);
+			//console.log("Chunk optimized:");
 		});
 	}
 
