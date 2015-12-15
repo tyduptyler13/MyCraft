@@ -128,7 +128,6 @@ class Chunk {
 		this.space = new THREE.Object3D();
 		this.added = false;
 		var geometry = this.geometry = new THREE.BufferGeometry();
-		geometry.frustumCulled = false;
 		this.attributes = {
 			position: new THREE.BufferAttribute(new Float32Array(), 3),
 			uv: new THREE.BufferAttribute(new Float32Array(), 2),
@@ -138,6 +137,8 @@ class Chunk {
 		geometry.addAttribute('uv', this.attributes.uv);
 		geometry.addAttribute('normal', this.attributes.normal);
 		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
+		this.mesh.receiveShadow = true;
+		this.mesh.castShadow = true;
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
 	}

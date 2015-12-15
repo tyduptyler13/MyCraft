@@ -15,8 +15,11 @@ var MyCraft = function(){
 
 	const renderer = this.renderer = new THREE.WebGLRenderer({antialias: true});
 	this.renderer.setSize(width, height);
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMapCascade = true;
+	//renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-	const camera = this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000, width, height);
+	const camera = this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100, width, height);
 
 	win.resize(function(){
 		width = win.width();
@@ -37,7 +40,7 @@ var MyCraft = function(){
 
 	this.setupPlayer();
 	this.setupChunks();
-	this.setupSky(5000, this.player);
+	this.setupSky(90, this.player);
 
 	this.timer = new THREE.Clock(true);
 	this.stats = new Stats();
@@ -116,21 +119,33 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	skyParams.inclination = Date.now() / (1800000) % 2;
 
 	const sunSphere = new THREE.Mesh(
-		new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+		new THREE.SphereBufferGeometry( 5, 16, 8 ),
 		new THREE.MeshBasicMaterial( { color: 0xffffff } )
 	);
+	sunSphere.frustumCulled = false;
 	sunSphere.visible = false;
 	sunSphere.fog = false;
 
 	const sun = new THREE.DirectionalLight(0xffffff, 1);
 	sun.position.copy(sunSphere.position);
 	sun.position.normalize();
-	this.scene.add(sun);
+	sun.castShadow = true;
+	sun.shadowCameraNear = -90;
+	sun.shadowCameraFar = 90;
+	sun.shadowCameraLeft = -90;
+	sun.shadowCameraRight = 90;
+	sun.shadowCameraTop = 90;
+	sun.shadowCameraBottom = -90;
+	sun.shadowMapWidth = 1024;
+	sun.shadowMapHeight = 1024;
+	sun.target = this.player.mesh;
+	this.scene.add(new THREE.DirectionalLightHelper(sun, 100));
 
 	const sky = new THREE.Sky(distance);
 	sky.mesh.frustumCulled = false;
 
 	sky.mesh.add(sunSphere);
+	sky.mesh.add(sun);
 
 	sky.mesh.position.copy(parent.position);
 	this.scene.add(sky.mesh);
@@ -142,10 +157,9 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 	const starGeo = new THREE.Geometry();
 
-	const starDist = distance * 0.9;
+	const starDist = distance * 0.95;
 
 	for (var i = 0; i < 10000; ++i){
-
 		const loc = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
 		loc.normalize().multiplyScalar(starDist);
 		starGeo.vertices.push(loc);
@@ -156,8 +170,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	const stars = new THREE.Points(starGeo, starMat);
 	stars.frustumCulled = false;
 	nightSky.add(stars);
-	nightSky.position.copy(parent.position);
-	this.scene.add(nightSky);
+	sky.mesh.add(nightSky);
 
 	const uniforms = sky.uniforms;
 	uniforms.distance.value = distance;
@@ -192,6 +205,12 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 2);
 		sun.intensity = THREE.Math.clamp(sunSphere.position.y + 1, 0, 1);
 
+		if (sun.intensity === 0){
+			sun.castShadow = false;
+		} else {
+			sun.castShadow = true;
+		}
+
 		if (sunSphere.position.y > 0){ //Day.
 			this.ambientLight.color.copy(night.clone().lerp(day, sunSphere.position.y / 10000 + .5));
 		} else { //Night.
@@ -203,10 +222,10 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		sun.position.copy(sunSphere.position);
 		sun.position.normalize();
 
-		nightSky.position.copy(parent.position);
+		sky.mesh.position.copy(parent.position);
+
 		nightSky.lookAt(sunSphere.position);
 
-		sky.mesh.position.copy(parent.position);
 	});
 
 };
