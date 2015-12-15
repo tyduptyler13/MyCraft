@@ -95,8 +95,9 @@ MyCraft.prototype.setupPlayer = function(){
 };
 MyCraft.prototype.update = function(delta){
 	const scope = this;
-	$.each(this.tasks, function(index, task){
+	async.each(this.tasks, function(task, callback){
 		task.call(scope, delta);
+		callback();
 	});
 };
 MyCraft.prototype.setupSky = function(distance, parent){
@@ -108,7 +109,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 		mieDirectionalG: 0.8,
 		luminance: 1,
 		inclination: 0.49, // elevation / inclination
-		azimuth: 0.25, // Facing front,
+		azimuth: 0.3, // Facing front,
 	};
 
 	//Sync time to current time.
@@ -185,8 +186,8 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	const day = new THREE.Color(0xFFFFFF).multiplyScalar(.7);
 
 	this.tasks.push(function(){
-		//skyParams.inclination = Date.now() / (1800000) % 2;
-		skyParams.inclination = 0;
+		skyParams.inclination = Date.now() / (1800000) % 2;
+		//skyParams.inclination = 0;
 
 		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 2);
 		sun.intensity = THREE.Math.clamp(sunSphere.position.y + 1, 0, 1);
@@ -213,33 +214,37 @@ MyCraft.prototype.setupChunks = function(){
 
 	const scope = this;
 
+	const createChunk = function(x, z){
+		const chunk = new Chunk(Math.floor(Math.random() * 8 - 2));
+		const excludeY = Math.floor(Math.random() * 8);
+		for (var x2 = 0; x2 < 8; ++x2){
+			for(var z2 = 0; z2 < 8; ++z2){
+				chunk.set(x2, excludeY, z2, -1);
+			}
+		}
+		const excludeX = Math.floor(Math.random() * 8);
+		for (var y2 = 0; y2 < 8; ++y2){
+			for(var z2 = 0; z2 < 8; ++z2){
+				chunk.set(excludeX, y2, z2, -1);
+			}
+		}
+		const excludeZ = Math.floor(Math.random() * 8);
+		for (var y2 = 0; y2 < 8; ++y2){
+			for(var x2 = 0; x2 < 8; ++x2){
+				chunk.set(x2, y2, excludeZ, -1);
+			}
+		}
+		chunk.position.set(x, -8, z);
+		scope.scene.add(chunk.space);
+		scope.chunks[chunk.position.toArray().join(',')] = chunk;
+		chunk.update();
+	}
 
-	const chunk = new Chunk(0);
-	for (var x2 = 0; x2 < 8; ++x2){
-		for(var z2 = 0; z2 < 8; ++z2){
-			chunk.set(x2, 3, z2, -1);
+	for (var x = -10; x < 10; ++x){
+		for (var z = -10; z < 10; ++z){
+			async.nextTick(createChunk.bind(null, x * 8, z * 8));
 		}
 	}
-	for (var y2 = 0; y2 < 8; ++y2){
-		for(var z2 = 0; z2 < 8; ++z2){
-			chunk.set(3, y2, z2, -1);
-		}
-	}
-	for (var y2 = 0; y2 < 8; ++y2){
-		for(var x2 = 0; x2 < 8; ++x2){
-			chunk.set(x2, y2, 3, -1);
-		}
-	}
-	chunk.position.set(0, -8, 0);
-	scope.scene.add(chunk.space);
-	scope.chunks[chunk.position.toArray().join(',')] = chunk;
-	chunk.update();
-
-	const chunk2 = new Chunk(1);
-	chunk2.position.set(9, -8, 0);
-	scope.scene.add(chunk2.space);
-	scope.chunks[chunk2.position.toArray().join(',')] = chunk2;
-	chunk2.update();
 
 };
 MyCraft.prototype.setupUI = function(){
@@ -282,7 +287,7 @@ MyCraft.prototype.setupUI = function(){
 		const val = anisotropy.find(':selected').val();
 		API.setAnisotropy(Number(val));
 	});
-}
+};
 
 $(function(){
 
