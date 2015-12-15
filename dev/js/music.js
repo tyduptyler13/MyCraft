@@ -35,13 +35,11 @@ $(function() {
 					finished();
 		});
     }
-    var songkeys = [];
-    var songnames = [];
     var ytplayer;
 
     function updatemusic() {
-        var song = Math.floor(Math.random() * songkeys.length);
-        $('#audioplayer').html("<i class='fa fa-music'></i> <span style='opacity: 1.0;'> Current Song: " + songnames[song] + " </span><div id='ytplayer'></div><button style='opacity: 1.0;background-color: transparent;color: white;' id='controlbutton'><i class='fa fa-pause'></i></button></div><button id='musicSkip'style='opacity: 1.0;background-color: transparent;color: white;'><i class='fa fa-step-forward'></i></button>");
+        var song = Math.floor(Math.random() * results.length);
+        $('#audioplayer').html("<i class='fa fa-music'></i> <span style='opacity: 1.0;'> Current Song: " + results[song]["title"] + " </span><div id='ytplayer'></div><button style='opacity: 1.0;background-color: transparent;color: white;' id='controlbutton'><i class='fa fa-pause'></i></button></div><button id='musicSkip'style='opacity: 1.0;background-color: transparent;color: white;'><i class='fa fa-step-forward'></i></button>");
         $("#controlbutton").click(function() {
             toggleMusic();
         })
@@ -51,7 +49,7 @@ $(function() {
         ytplayer = new YT.Player('ytplayer', {
             height: '0',
             width: '0',
-            videoId: songkeys[song],
+            videoId: results[song]["videoId"],
             events: {
                 'onReady': onPlayerReady,
                 'onStateChange': onPlayerStateChange
@@ -59,7 +57,7 @@ $(function() {
         });
 
 
-        $('#musicTitle').html(songnames[song]);
+        $('#musicTitle').html(results[song]["title"]);
         $("#musicTitle").fadeIn(200).delay(10000).fadeOut(200);
     }
 
@@ -70,14 +68,14 @@ $(function() {
         gapi.client.load('youtube', 'v3', function() {
 
             loadlist("", function() {
-                var itfix = 0;
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].snippet.title != "Private video" && results[i].snippet.title.toLowerCase().indexOf(" mix") === -1) {
-                        songkeys[i - itfix] = results[i - itfix].snippet.resourceId.videoId;
-                        songnames[i - itfix] = results[i - itfix].snippet.title;
-                    } else
-                        itfix++;
-                }
+                // var itfix = 0;
+                // for (var i = 0; i < results.length; i++) {
+                    // if (results[i].snippet.title != "Private video" && results[i].snippet.title.toLowerCase().indexOf(" mix") === -1) {
+                        // songkeys[i - itfix] = results[i - itfix].snippet.resourceId.videoId;
+                        // songnames[i - itfix] = results[i - itfix].snippet.title;
+                    // } else
+                        // itfix++;
+                // }
                 updatemusic();
             });
 
