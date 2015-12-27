@@ -131,7 +131,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	//sun.position.normalize();
 	sun.castShadow = true;
 	sun.shadowCameraNear = 1;
-	sun.shadowCameraFar = 150;
+	sun.shadowCameraFar = 132;
 	sun.shadowCameraLeft = -32;
 	sun.shadowCameraRight = 32;
 	sun.shadowCameraTop = 32;
@@ -151,7 +151,7 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	this.scene.add(sky.mesh);
 	sky.mesh.fog = false;
 
-	this.scene.fog = new THREE.FogExp2(0x000000, 0.0025);
+	this.scene.fog = new THREE.FogExp2(0x000000, 0.020);
 
 	const nightSky = new THREE.Object3D();
 
@@ -196,26 +196,30 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	updateUniforms(skyParams);
 
 	const night = new THREE.Color(0x001848);
-	const day = new THREE.Color(0xFFFFFF).multiplyScalar(.7);
+	const day = new THREE.Color(0xFFFFFF).multiplyScalar(.5);
+
+	var scope = this;
 
 	this.tasks.push(function(){
-		//skyParams.inclination = Date.now() / (1800000) % 2;
-		skyParams.inclination = 0;
+		skyParams.inclination = Date.now() / (1800000) % 2;
+		//skyParams.inclination = 0;
 
 		starMat.opacity = Math.pow(1 - Math.abs(1 - skyParams.inclination), 2);
 		sun.intensity = THREE.Math.clamp(sunSphere.position.y + 1, 0, 1);
 
-		if (sun.intensity === 0){
-			sun.castShadow = false;
-		} else {
-			sun.castShadow = true;
-		}
+// 		if (sun.intensity === 0){
+// 			sun.castShadow = false;
+// 		} else {
+// 			sun.castShadow = true;
+// 		}
 
 		if (sunSphere.position.y > 0){ //Day.
-			this.ambientLight.color.copy(night.clone().lerp(day, sunSphere.position.y / 10000 + .5));
+			scope.ambientLight.color.copy(night.clone().lerp(day, sunSphere.position.y / 100));
 		} else { //Night.
-			this.ambientLight.color.copy(day.clone().lerp(night, -sunSphere.position.y / 10000 + .5));
+			scope.ambientLight.color.copy(day.clone().lerp(night, -sunSphere.position.y / 100));
 		}
+
+		//scope.scene.fog.color = scope.ambientLight.color.getHex();
 
 		updateUniforms(skyParams);
 
@@ -234,7 +238,7 @@ MyCraft.prototype.setupChunks = function(){
 	const scope = this;
 
 	const createChunk = function(x, z){
-		const chunk = new Chunk(Math.floor(Math.random() * 8 - 2));
+		const chunk = new Chunk(Math.floor(Math.random() * 9 - 2));
 		const excludeY = Math.floor(Math.random() * 8);
 		for (var x2 = 0; x2 < 8; ++x2){
 			for(var z2 = 0; z2 < 8; ++z2){
