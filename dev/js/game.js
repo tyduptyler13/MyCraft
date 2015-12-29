@@ -106,10 +106,10 @@ MyCraft.prototype.update = function(delta){
 MyCraft.prototype.setupSky = function(distance, parent){
 
 	const skyParams = {
-		turbidity: 10,
-		reileigh: 2,
-		mieCoefficient: 0.005,
-		mieDirectionalG: 0.8,
+		//turbidity: 10,
+		//reileigh: 2,
+		//mieCoefficient: 0.005,
+		//mieDirectionalG: 0.8,
 		luminance: 1,
 		inclination: 0.49, // elevation / inclination
 		azimuth: 0.3, // Facing front,
@@ -175,11 +175,11 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	const uniforms = sky.uniforms;
 	uniforms.distance.value = distance;
 	const updateUniforms = function(skyParams){
-		uniforms.turbidity.value = skyParams.turbidity;
-		uniforms.reileigh.value = skyParams.reileigh;
+		//uniforms.turbidity.value = skyParams.turbidity;
+		//uniforms.reileigh.value = skyParams.reileigh;
 		uniforms.luminance.value = skyParams.luminance;
-		uniforms.mieCoefficient.value = skyParams.mieCoefficient;
-		uniforms.mieDirectionalG.value = skyParams.mieDirectionalG;
+		//uniforms.mieCoefficient.value = skyParams.mieCoefficient;
+		//uniforms.mieDirectionalG.value = skyParams.mieDirectionalG;
 
 		var theta = Math.PI * ( skyParams.inclination - 0.5 );
 		var phi = 2 * Math.PI * ( skyParams.azimuth - 0.5 );
