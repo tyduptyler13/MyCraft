@@ -52,19 +52,19 @@ THREE.ShaderLib[ 'sky' ] = {
 		"uniform float distance;",
 		"varying vec3 vWorldPosition;",
 
-		"vec3 cameraPos = vec3(0., 0., 0.);",
+		"//vec3 cameraPos = vec3(0., 0., 0.);",
 		"// uniform sampler2D sDiffuse;",
-		"// const float turbidity = 10.0; //",
-		"// const float reileigh = 2.; //",
+		"const float turbidity = 10.0; //",
+		"const float reileigh = 2.; //",
 		"// const float luminance = 1.0; //",
-		"// const float mieCoefficient = 0.005;",
-		"// const float mieDirectionalG = 0.8;",
+		"const float mieCoefficient = 0.005;",
+		"const float mieDirectionalG = 0.8;",
 
 		"uniform float luminance;",
-		"uniform float turbidity;",
-		"uniform float reileigh;",
-		"uniform float mieCoefficient;",
-		"uniform float mieDirectionalG;",
+		"//uniform float turbidity;",
+		"//uniform float reileigh;",
+		"//uniform float mieCoefficient;",
+		"//uniform float mieDirectionalG;",
 
 		"// constants for atmospheric scattering",
 		"const float e = 2.71828182845904523536028747135266249775724709369995957;",
@@ -178,7 +178,7 @@ THREE.ShaderLib[ 'sky' ] = {
 
 			"// optical length",
 			"// cutoff angle at 90 to avoid singularity in next formula.",
-			"float zenithAngle = acos(max(0.0, dot(up, normalize(vWorldPosition - cameraPos))));",
+			"float zenithAngle = acos(max(0.0, dot(up, normalize(vWorldPosition - cameraPosition))));",
 			"float sR = rayleighZenithLength / (cos(zenithAngle) + 0.15 * pow(93.885 - ((zenithAngle * 180.0) / pi), -1.253));",
 			"float sM = mieZenithLength / (cos(zenithAngle) + 0.15 * pow(93.885 - ((zenithAngle * 180.0) / pi), -1.253));",
 
@@ -188,7 +188,7 @@ THREE.ShaderLib[ 'sky' ] = {
 			"vec3 Fex = exp(-(betaR * sR + betaM * sM));",
 
 			"// in scattering",
-			"float cosTheta = dot(normalize(vWorldPosition - cameraPos), sunDirection);",
+			"float cosTheta = dot(normalize(vWorldPosition - cameraPosition), sunDirection);",
 
 			"float rPhase = rayleighPhase(cosTheta*0.5+0.5);",
 			"vec3 betaRTheta = betaR * rPhase;",
@@ -201,7 +201,7 @@ THREE.ShaderLib[ 'sky' ] = {
 			"Lin *= mix(vec3(1.0),pow(sunE * ((betaRTheta + betaMTheta) / (betaR + betaM)) * Fex,vec3(1.0/2.0)),clamp(pow(1.0-dot(up, sunDirection),5.0),0.0,1.0));",
 
 			"//nightsky",
-			"vec3 direction = normalize(vWorldPosition - cameraPos);",
+			"vec3 direction = normalize(vWorldPosition - cameraPosition);",
 			"float theta = acos(direction.y); // elevation --> y-axis, [-pi/2, pi/2]",
 			"float phi = atan(direction.z, direction.x); // azimuth --> x-axis [-pi/2, pi/2]",
 			"vec2 uv = vec2(phi, theta) / vec2(2.0*pi, pi) + vec2(0.5, 0.0);",
@@ -211,7 +211,7 @@ THREE.ShaderLib[ 'sky' ] = {
 			"// composition + solar disc",
 			"//if (cosTheta > sunAngularDiameterCos)",
 			"float sundisk = smoothstep(sunAngularDiameterCos,sunAngularDiameterCos+0.00002,cosTheta);",
-			"// if (normalize(vWorldPosition - cameraPos).y>0.0)",
+			"// if (normalize(vWorldPosition - cameraPosition).y>0.0)",
 			"L0 += (sunE * 19000.0 * Fex)*sundisk;",
 
 
