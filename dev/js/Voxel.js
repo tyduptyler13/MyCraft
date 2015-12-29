@@ -139,6 +139,7 @@ class Chunk {
 		this.mesh = new THREE.Mesh(geometry, API.getBlockMaterial());
 		this.mesh.receiveShadow = true;
 		this.mesh.castShadow = true;
+		this.mesh.userData.chunk = this;
 		this._metaBlocks = []; //Reserved for future special blocks.
 		if (type !== 0) this.fill(type);
 	}
