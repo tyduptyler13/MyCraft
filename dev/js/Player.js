@@ -122,10 +122,50 @@ class Player {
 
 		});
 
+		const setCursor = (function(){
+
+			const boxCursor = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({color:'white', fog: false, wireframe: true}));
+			boxCursor.scale.multiplyScalar(1.01);
+			game.scene.add(boxCursor);
+			const raycaster = new THREE.Raycaster();
+			raycaster.far = 10; //10 block distance limit (The first one is the only one that matters anyways)
+			const v2 = new THREE.Vector2();
+			const a = new THREE.Vector3();
+
+			return function(){
+				//Add/remove boxCursor;
+				raycaster.setFromCamera(v2, game.camera);
+
+				const intersects = raycaster.intersectObjects(game.scene.children, true);
+
+				if (intersects.length === 0){
+					boxCursor.visible = false;
+				} else {
+					for (var i = 0, l = intersects.length; i < l; ++i){
+						if (!intersects[i].object.userData.chunk){ //Ignore non chunks.
+							continue;
+						} else {
+							a.subVectors(intersects[i].point, intersects[i].face.normal);
+							const b = intersects[i].face.normal;
+							if (b.x + b.y + b.z > 0) { //Check which side we are looking at.
+								boxCursor.position.copy(a.floor().addScalar(.5));
+							} else {
+								boxCursor.position.copy(a.ceil().subScalar(.5));
+							}
+							boxCursor.visible = true;
+							return;
+						}
+					}
+					boxCursor.visible = false;
+				}
+			}
+		})();
+
 		game.tasks.push(function(delta){
 
 			if (controlsEnabled) {
 				scope.move(movement, delta);
+				setCursor();
 			}
 
 		});
