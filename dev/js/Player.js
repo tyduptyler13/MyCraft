@@ -131,6 +131,7 @@ class Player {
 			raycaster.far = 10; //10 block distance limit (The first one is the only one that matters anyways)
 			const v2 = new THREE.Vector2();
 			const a = new THREE.Vector3();
+			const debug = $('#debug');
 
 			return function(){
 				//Add/remove boxCursor;
@@ -153,6 +154,9 @@ class Player {
 								boxCursor.position.copy(a.ceil().subScalar(.5));
 							}
 							boxCursor.visible = true;
+
+							debug.html('x: ' + intersects[i].point.x + '<br>y: ' + intersects[i].point.y + '<br>z: ' + intersects[i].point.z);
+
 							return;
 						}
 					}

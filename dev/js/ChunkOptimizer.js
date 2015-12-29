@@ -113,7 +113,7 @@ const marchZ = function(linearRanges){
 			}
 
 		} else if (linearRanges[z + 1].length === 0) { //Special case where strips of single blocks are forgotten.
-			ranges = ranges.concat(linearRanges[z].map(function(val){
+			range = range.concat(linearRanges[z].map(function(val){
 				val.z = 0;
 				val.zLen = 1;
 				return val;

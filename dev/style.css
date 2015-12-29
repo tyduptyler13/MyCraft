@@ -66,6 +66,11 @@ html, body {
     background-color: white;
 }
 
+#debug {
+    position: absolute;
+    top: 40%;
+}
+
 .ui {
     background-color: black;
     background-image: url(images/background.jpg);
