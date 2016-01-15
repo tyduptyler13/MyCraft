@@ -190,7 +190,10 @@ MyCraft.prototype.setupSky = function(distance, parent){
 
 		//moonLoc.multiplyVectors(sunSphere.position, {x: -0.9, y: -0.9, z: -0.9});
 
-		sky.uniforms.sunPosition.value.copy( sunSphere.position );
+		const sunDirection = sunSphere.position.clone().normalize();
+
+		sky.uniforms.sunDirection.value.copy( sunDirection );
+		sky.uniforms.sunfade.value = 1.0 - THREE.Math.clamp(1.0-Math.exp((sunSphere.position.y/distance)),0.0,1.0);
 	}
 
 	updateUniforms(skyParams);

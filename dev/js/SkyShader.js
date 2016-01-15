@@ -21,18 +21,28 @@ THREE.ShaderLib[ 'sky' ] = {
 	uniforms: {
 
 		luminance:	 { type: "f", value: 1 },
-		turbidity:	 { type: "f", value: 2 },
-		reileigh:	 { type: "f", value: 1 },
-		mieCoefficient:	 { type: "f", value: 0.005 },
-		mieDirectionalG: { type: "f", value: 0.8 },
-		sunPosition: 	 { type: "v3", value: new THREE.Vector3() },
-		distance:	{ type: "f", value: 450000}
+		//turbidity:	 { type: "f", value: 2 },
+		//reileigh:	 { type: "f", value: 1 },
+		//mieCoefficient:	 { type: "f", value: 0.005 },
+		//mieDirectionalG: { type: "f", value: 0.8 },
+		sunDirection: 	 { type: "v3", value: new THREE.Vector3() },
+		distance:	{ type: "f", value: 450000 },
+		sunfade:	{ type: "f", value: 0 }
 
 	},
 
 	vertexShader: [
 
+		"uniform vec3 sunDirection;",
 		"varying vec3 vWorldPosition;",
+		"varying float sunIntensity;",
+
+		"// earth shadow hack",
+		"const float pi = 3.141592653589793238462643383279502884197169;",
+		"const float cutoffAngle = pi/1.95;",
+		"const float steepness = 1.5;",
+		"const float EE = 1000.0;",
+		"const vec3 up = vec3(0.0, 1.0, 0.0);",
 
 		"void main() {",
 
@@ -41,6 +51,8 @@ THREE.ShaderLib[ 'sky' ] = {
 
 			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 
+			"sunIntensity = EE * max(0.0, 1.0 - exp(-((cutoffAngle - acos(dot(sunDirection, up)))/steepness)));",
+
 		"}",
 
 	].join( "\n" ),
@@ -48,9 +60,11 @@ THREE.ShaderLib[ 'sky' ] = {
 	fragmentShader: [
 
 		"uniform sampler2D skySampler;",
-		"uniform vec3 sunPosition;",
+		"uniform vec3 sunDirection;",
 		"uniform float distance;",
+		"uniform float sunfade;",
 		"varying vec3 vWorldPosition;",
+		"varying float sunIntensity;",
 
 		"//vec3 cameraPos = vec3(0., 0., 0.);",
 		"// uniform sampler2D sDiffuse;",
@@ -92,11 +106,6 @@ THREE.ShaderLib[ 'sky' ] = {
 		"const float sunAngularDiameterCos = 0.999956676946448443553574619906976478926848692873900859324;",
 		"// 66 arc seconds -> degrees, and the cosine of that",
 
-		"// earth shadow hack",
-		"const float cutoffAngle = pi/1.95;",
-		"const float steepness = 1.5;",
-
-
 		"vec3 totalRayleigh(vec3 lambda)",
 		"{",
 			"return (8.0 * pow(pi, 3.0) * pow(pow(n, 2.0) - 1.0, 2.0) * (6.0 + 3.0 * pn)) / (3.0 * N * pow(lambda, vec3(4.0)) * (6.0 - 7.0 * pn));",
@@ -128,10 +137,10 @@ THREE.ShaderLib[ 'sky' ] = {
 			"return (1.0 / (4.0*pi)) * ((1.0 - pow(g, 2.0)) / pow(1.0 - 2.0*g*cosTheta + pow(g, 2.0), 1.5));",
 		"}",
 
-		"float sunIntensity(float zenithAngleCos)",
-		"{",
-			"return EE * max(0.0, 1.0 - exp(-((cutoffAngle - acos(zenithAngleCos))/steepness)));",
-		"}",
+		//"float sunIntensity(float zenithAngleCos)",
+		//"{",
+		//	"return ",
+		//"}",
 
 		"// float logLuminance(vec3 c)",
 		"// {",
@@ -139,13 +148,13 @@ THREE.ShaderLib[ 'sky' ] = {
 		"// }",
 
 		"// Filmic ToneMapping http://filmicgames.com/archives/75",
-		"float A = 0.15;",
-		"float B = 0.50;",
-		"float C = 0.10;",
-		"float D = 0.20;",
-		"float E = 0.02;",
-		"float F = 0.30;",
-		"float W = 1000.0;",
+		"const float A = 0.15;",
+		"const float B = 0.50;",
+		"const float C = 0.10;",
+		"const float D = 0.20;",
+		"const float E = 0.02;",
+		"const float F = 0.30;",
+		"const float W = 1000.0;",
 
 		"vec3 Uncharted2Tonemap(vec3 x)",
 		"{",
@@ -155,7 +164,7 @@ THREE.ShaderLib[ 'sky' ] = {
 
 		"void main() ",
 		"{",
-			"float sunfade = 1.0-clamp(1.0-exp((sunPosition.y/distance)),0.0,1.0);",
+			"// float sunfade = 1.0-clamp(1.0-exp((sunPosition.y/distance)),0.0,1.0);",
 
 			"// luminance =  1.0 ;// vWorldPosition.y / 450000. + 0.5; //sunPosition.y / 450000. * 1. + 0.5;",
 
@@ -163,9 +172,9 @@ THREE.ShaderLib[ 'sky' ] = {
 
 			"float reileighCoefficient = reileigh - (1.0* (1.0-sunfade));",
 
-			"vec3 sunDirection = normalize(sunPosition);",
+			"// vec3 sunDirection = normalize(sunPosition);",
 
-			"float sunE = sunIntensity(dot(sunDirection, up));",
+			//"float sunE = sunIntensity(sunAngle);",
 
 			"// extinction (absorbtion + out scattering) ",
 			"// rayleigh coefficients",
@@ -197,8 +206,8 @@ THREE.ShaderLib[ 'sky' ] = {
 			"vec3 betaMTheta = betaM * mPhase;",
 
 
-			"vec3 Lin = pow(sunE * ((betaRTheta + betaMTheta) / (betaR + betaM)) * (1.0 - Fex),vec3(1.5));",
-			"Lin *= mix(vec3(1.0),pow(sunE * ((betaRTheta + betaMTheta) / (betaR + betaM)) * Fex,vec3(1.0/2.0)),clamp(pow(1.0-dot(up, sunDirection),5.0),0.0,1.0));",
+			"vec3 Lin = pow(sunIntensity * ((betaRTheta + betaMTheta) / (betaR + betaM)) * (1.0 - Fex),vec3(1.5));",
+			"Lin *= mix(vec3(1.0),pow(sunIntensity * ((betaRTheta + betaMTheta) / (betaR + betaM)) * Fex,vec3(1.0/2.0)),clamp(pow(1.0-dot(up, sunDirection),5.0),0.0,1.0));",
 
 			"//nightsky",
 			"vec3 direction = normalize(vWorldPosition - cameraPosition);",
@@ -212,7 +221,7 @@ THREE.ShaderLib[ 'sky' ] = {
 			"//if (cosTheta > sunAngularDiameterCos)",
 			"float sundisk = smoothstep(sunAngularDiameterCos,sunAngularDiameterCos+0.00002,cosTheta);",
 			"// if (normalize(vWorldPosition - cameraPosition).y>0.0)",
-			"L0 += (sunE * 19000.0 * Fex)*sundisk;",
+			"L0 += (sunIntensity * 19000.0 * Fex)*sundisk;",
 
 
 			"vec3 whiteScale = 1.0/Uncharted2Tonemap(vec3(W));",
