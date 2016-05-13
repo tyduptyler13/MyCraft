@@ -130,14 +130,14 @@ MyCraft.prototype.setupSky = function(distance, parent){
 	sun.position.copy(sunSphere.position);
 	//sun.position.normalize();
 	sun.castShadow = true;
-	sun.shadowCameraNear = 1;
-	sun.shadowCameraFar = 132;
-	sun.shadowCameraLeft = -32;
-	sun.shadowCameraRight = 32;
-	sun.shadowCameraTop = 32;
-	sun.shadowCameraBottom = -32;
-	sun.shadowMapWidth = 2048;
-	sun.shadowMapHeight = 2048;
+	sun.shadow.camera.near = 1;
+	sun.shadow.camera.far = 132;
+	sun.shadow.camera.left = -32;
+	sun.shadow.camera.right = 32;
+	sun.shadow.camera.top = 32;
+	sun.shadow.camera.bottom = -32;
+	sun.shadow.mapSize.width = 2048;
+	sun.shadow.mapSize.height = 2048;
 	sun.target = this.player.mesh;
 	//this.scene.add(new THREE.DirectionalLightHelper(sun, 100));
 
@@ -239,25 +239,25 @@ MyCraft.prototype.setupChunks = function(){
 
 	const createChunk = function(x, z){
 		const chunk = new Chunk(Math.floor(Math.random() * 9 - 2));
-		const excludeY = Math.floor(Math.random() * 8);
-		for (var x2 = 0; x2 < 8; ++x2){
-			for(var z2 = 0; z2 < 8; ++z2){
+		const excludeY = Math.floor(Math.random() * 16);
+		for (var x2 = 0; x2 < 16; ++x2){
+			for(var z2 = 0; z2 < 16; ++z2){
 				chunk.set(x2, excludeY, z2, -1);
 			}
 		}
-		const excludeX = Math.floor(Math.random() * 8);
-		for (var y2 = 0; y2 < 8; ++y2){
-			for(var z2 = 0; z2 < 8; ++z2){
+		const excludeX = Math.floor(Math.random() * 16);
+		for (var y2 = 0; y2 < 16; ++y2){
+			for(var z2 = 0; z2 < 16; ++z2){
 				chunk.set(excludeX, y2, z2, -1);
 			}
 		}
-		const excludeZ = Math.floor(Math.random() * 8);
-		for (var y2 = 0; y2 < 8; ++y2){
-			for(var x2 = 0; x2 < 8; ++x2){
+		const excludeZ = Math.floor(Math.random() * 16);
+		for (var y2 = 0; y2 < 16; ++y2){
+			for(var x2 = 0; x2 < 16; ++x2){
 				chunk.set(x2, y2, excludeZ, -1);
 			}
 		}
-		chunk.position.set(x, -8, z);
+		chunk.position.set(x, -16, z);
 		scope.scene.add(chunk.space);
 		scope.chunks[chunk.position.toArray().join(',')] = chunk;
 		chunk.update();
@@ -265,7 +265,7 @@ MyCraft.prototype.setupChunks = function(){
 
 	for (var x = -10; x < 10; ++x){
 		for (var z = -10; z < 10; ++z){
-			async.nextTick(createChunk.bind(null, x * 8, z * 8));
+			async.nextTick(createChunk.bind(null, x * 16, z * 16));
 		}
 	}
 
