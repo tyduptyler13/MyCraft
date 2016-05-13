@@ -6,7 +6,7 @@ const marchY = function(planeRanges){
 	var ranges = [];
 
 	var last = null;
-	for (var y = 0; y < 8; ++y){
+	for (var y = 0; y < 16; ++y){
 
 		if (y !== 0){
 
@@ -68,11 +68,11 @@ const marchZ = function(linearRanges){
 	var range = [];
 
 	var last = null;
-	for (var count = 0; count < 64; ++count){
+	for (var count = 0; count < 256; ++count){
 
 
 
-		var z = count % 8;
+		var z = count % 16;
 
 		if (z !== 0){
 
@@ -120,7 +120,7 @@ const marchZ = function(linearRanges){
 			}));
 		}
 
-		if (z === 7){
+		if (z === 15){
 			last = null;
 			ranges.push(range);
 			range = [];
@@ -142,9 +142,9 @@ const marchX = function(typeArray) {
 	var cur = null;
 	var first = 0;
 
-	for (var count = 0; count < 512; ++count){
+	for (var count = 0; count < 4096; ++count){
 
-		var x = count % 8;
+		var x = count % 16;
 
 		if (typeArray[count] !== cur){
 
@@ -157,7 +157,7 @@ const marchX = function(typeArray) {
 
 		}
 
-		if (x === 7){ //Last element
+		if (x === 15){ //Last element
 			range.push({type: cur, x: first, y: null, z: null, xLen: x - first + 1, yLen: null, zLen: null});
 			ranges.push(range);
 			range = [];
@@ -280,7 +280,7 @@ self.addEventListener('message',function(e){
 	const data = new Int8Array(e.data);
 
 	var visible = false;
-	for (var i = 0; i < 512; ++i){
+	for (var i = 0; i < 4096; ++i){
 		if (data[i]>=0){
 			visible = true;
 			break;

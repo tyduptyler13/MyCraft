@@ -124,7 +124,7 @@ const chunkPool = new ThreadPool('js/ChunkOptimizer.js');
 class Chunk {
 
 	constructor(type){
-		this.blocks = new Int8Array(8 * 8 * 8);
+		this.blocks = new Int8Array(16 * 16 * 16);
 		this.space = new THREE.Object3D();
 		this.added = false;
 		var geometry = this.geometry = new THREE.BufferGeometry();
@@ -145,41 +145,39 @@ class Chunk {
 	}
 
 	at(x, y, z) {
-		return this.blocks[x + y*8 + z*8*8];
+		return this.blocks[x + y*16 + z*16*16];
 	}
 
 	static getPos(index) {
-		var x = index & 0b111;
-		var y = (index>>3) & 0b111;
-		var z = (index>>6) & 0b111;
+		const x = index & 0xf;
+		const y = (index>>4) & 0xf;
+		const z = (index>>8) & 0xf;
 		return [x,y,z];
 	}
 
 	set(x, y, z, type) {
-		var index = x + y*8 + z*8*8;
-		if (index < 0 || index > 511){
+		var index = x + y*16 + z*16*16;
+		if (index < 0 || index >= 4096){
 			throw new Error("Out of bounds.");
 		}
 		this.blocks[index] = type;
 	}
 
 	fill(type) {
-		var count = 0;
 		this.blocks.fill(type); //Native fill operation.
 	}
 
 	/**
 	 * This function calls a callback at the index of every block in the chunk.
 	 *
-	 * @param func {function(block, x, y, z)}
+	 * @param func {function(block, x, y, z, index)}
 	 */
 	walk(func){
 		var count = 0;
-		for (var z = 0; z < 8; ++z){
-			for (var y = 0; y < 8; ++y){
-				for (var x = 0; x < 8; ++x){
-					func(this.blocks[count], x, y, z);
-					count++;
+		for (var z = 0; z < 16; ++z){
+			for (var y = 0; y < 16; ++y){
+				for (var x = 0; x < 16; ++x, ++count){
+					func(this.blocks[count], x, y, z, count);
 				}
 			}
 		}
@@ -219,6 +217,12 @@ class Chunk {
 					scope.space.add(scope.mesh);
 				});
 				scope.added = true;
+			}
+
+			if (scope.geometry.attributes['position'].count === 0){
+				scope.space.visible = false;
+			} else {
+				scope.space.visible = true;
 			}
 
 			//console.log("Chunk optimized:");
