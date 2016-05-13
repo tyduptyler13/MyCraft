@@ -38,12 +38,19 @@
 				throw err;
 			}
 
-			const material = new THREE.MeshPhongMaterial({
+			var opts = {
 				map: texCache[type]['diffuseMap'],
-				specularMap: texCache[type]['specularMap'],
-				normalMap: texCache[type]['normalMap'],
 				name: BlockData[type].name
-			});
+			};
+
+			if (texCache[type]['specularMap']){
+				opts.specularMap = texCache[type]['specularMap'];
+			}
+			if (texCache[type]['normalMap']){
+				opts.normalMap = texCache[type]['normalMap'];
+			}
+
+			const material = new THREE.MeshPhongMaterial(opts);
 
 			matCache[type] = material;
 
